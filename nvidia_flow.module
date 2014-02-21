@@ -1,0 +1,255 @@
+<?php
+
+/**
+ * @file
+ * NVIDIA Flow implementation of the State Flow module
+ */
+
+include 'inc/nvidia_flow.blocks.inc';
+include 'inc/nvidia_flow.admin.inc';
+include 'inc/nvidia_flow.activity.inc';
+
+/**
+ * Implements hook_menu().
+ */
+function nvidia_flow_menu() {
+  $items['admin/content/node/all-content'] = array(
+    'title' => 'All Content',
+    'description' => 'Show all content on the site.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('nvidia_flow_all_content_page'),
+    'access arguments' => array('access content overview'),
+    'file' => 'inc/nvidia_flow.pages.inc',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => -3,
+  );
+  $items['admin/content/node/review'] = array(
+    'title' => 'Needs Review',
+    'description' => 'Show content that is in the review state.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('nvidia_flow_needs_review_page'),
+    'access arguments' => array('approve and reject content'),
+    'file' => 'inc/nvidia_flow.pages.inc',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => -4,
+  );
+  $items['admin/content/node/my-content'] = array(
+    'title' => 'My Content',
+    'description' => 'Show all content that is authored by the current user.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('nvidia_flow_my_content_page'),
+    'access arguments' => array('access content overview'),
+    'file' => 'inc/nvidia_flow.pages.inc',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => -5,
+  );
+  $items['admin/content/node/all-content/add'] = array(
+    'title' => 'Add content',
+    'page callback' => 'node_add_page',
+    'access arguments' => 'access content overview',
+    'file path' => drupal_get_path('module', 'node'),
+    'file' => 'node.pages.inc',
+    'type' => MENU_LOCAL_ACTION,
+  );
+  $items['admin/content/node/review/add'] = array(
+    'title' => 'Add content',
+    'page callback' => 'node_add_page',
+    'access arguments' => 'access content overview',
+    'file path' => drupal_get_path('module', 'node'),
+    'file' => 'node.pages.inc',
+    'type' => MENU_LOCAL_ACTION,
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_menu_alter().
+ */
+function nvidia_flow_menu_alter(&$items) {
+  // Take over the admin/content page
+  $items['admin/content']['title'] = 'Content Dashboard';
+  $items['admin/content']['page callback'] = 'nvidia_flow_dashboard_page';
+  $items['admin/content']['access arguments'] = array('access content overview');
+  unset($items['admin/content']['page arguments']);
+  $module = drupal_get_path('module', 'nvidia_flow');
+  $items['admin/content']['file path'] = $module . '/inc/';
+  $items['admin/content']['file'] = 'nvidia_flow.pages.inc';
+
+  // Remove the content revisions page that State Flow adds
+  unset($items['admin/content/content-revisions']);
+}
+
+/**
+ * Implements hook_permission().
+ */
+function nvidia_flow_permission() {
+	return array(
+    'approve and reject content' => array(
+      'title' => t('Approve and reject content'),
+      'description' => t('Approve or reject content, tranisionting it to either the published or draft state.'),
+    ),
+	);
+}
+
+/**
+ * Implements hook_ctools_plugin_type().
+ */
+function nvidia_flow_ctools_plugin_type() {
+  $plugins = array(
+    'plugins' => array(
+      'cache' => TRUE,
+      'use hooks' => TRUE,
+      'info file' => TRUE,
+      'alterable' => TRUE,
+      'classes' => array('handler')
+    ),
+  );
+  return $plugins;
+}
+
+/**
+ * Implements hook_state_flow_plugins().
+ */
+function nvidia_flow_state_flow_plugins() {
+  $info = array();
+  $path = drupal_get_path('module', 'nvidia_flow') . '/plugins';
+  $info['nvidia_flow'] = array(
+    'handler' => array(
+      'class' => 'NvidiaFlow',
+      'path' => $path,
+      'file' => 'nvidia_flow.inc',
+    ),
+  );
+  return $info;
+}
+
+/**
+ * Implements hook_state_flow_machine_type_alter()
+ *
+ * @param string $machine_type
+ * @param object $node
+ */
+function nvidia_flow_state_flow_machine_type_alter(&$machine_type, $node) {
+  $machine_type = 'nvidia_flow';
+}
+
+/**
+ * Implements hook_node_insert().
+ */
+function nvidia_flow_node_insert($node) {
+  nvidia_flow_activity_log($node, 'new_content');
+}
+
+/**
+ * Implements hook_node_update().
+ */
+function nvidia_flow_node_update($node) {
+  nvidia_flow_activity_log($node, 'updated_content');
+}
+
+/**
+ * Implements hook_user_insert().
+ */
+function nvidia_flow_user_insert($user) {
+  nvidia_flow_activity_log($user, 'new_user');
+}
+
+/**
+ * Implements hook_user_update().
+ */
+function nvidia_flow_user_update(&$edit, $account, $category) {
+  $old_user = user_load($account->uid);
+  // Compare the roles to see what was removed
+  if($removed_roles = array_diff_key($old_user->roles, $account->roles)) {
+    foreach ($removed_roles as $key => $removed_role) {
+      nvidia_flow_activity_log($account, 'updated_user_roles', array('removed_role' => $removed_role));
+    }
+  }
+
+  // Compare the roles to see what was added
+  if($added_roles = array_diff_key($account->roles, $old_user->roles)) {
+    foreach ($added_roles as $key => $added_role) {
+      $added_role = user_role_load($added_role);
+      $added_role_name = $added_role->name;
+      nvidia_flow_activity_log($account, 'updated_user_roles', array('added_role' => $added_role_name));
+    }
+  }
+}
+
+/**
+ * Implements hook_block_info().
+ */
+function nvidia_flow_block_info() {
+  $blocks = array();
+  $blocks['my_latest_content'] = array(
+    'info' => t('NVIDIA Flow: My Lastest Content'),
+  );
+  $blocks['needs_review'] = array(
+    'info' => t('NVIDIA Flow: Needs Review'),
+  );
+  $blocks['activity_monitor'] = array(
+    'info' => t('NVIDIA Flow: Latest Activity'),
+  );
+ 
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function nvidia_flow_block_view($delta='') {
+  $block = array();
+ 
+  switch($delta) {
+    case 'my_latest_content' :
+      $block['subject'] = t('My Latest Content');
+      $block['content'] = drupal_get_form('my_latest_content_block');
+      break;
+    case 'needs_review' :
+      if (user_access('approve and reject content')) {
+        $block['subject'] = t('Content Needing Review');
+        $block['content'] = drupal_get_form('needs_review_block');
+      }
+      break;
+    case 'activity_monitor' :
+      $block['subject'] = t('Latest Activity');
+      $block['content'] = latest_activity_block();
+      break;
+  }
+ 
+  return $block;
+}
+
+/**
+ * Implements hook_query_node_revision_alter()
+ */
+function nvidia_flow_query_node_revision_alter(QueryAlterableInterface $query) {
+  // Get the filter form the session
+  $filters = $query->getMetaData('filters');
+
+  // Modify the query for the 'Status' filter
+  if ($filter = isset($filters['status']) ? $filters['status'] : NULL) {
+    $query->condition('nrs.state', $filter);
+  }
+
+  // Modify the query for the 'Type' filter
+  if ($filter = isset($filters['type']) ? $filters['type'] : NULL) {
+    $query->condition('n.type', $filter);
+  }
+
+  // Modify the query for the 'Author' filter
+  if ($filter = isset($filters['author']) ? $filters['author'] : NULL) {
+    $query->condition('u.name', $filter);
+  }
+
+  // Modify the query for the 'Title' filter
+  if ($filter = isset($filters['title']) ? $filters['title'] : NULL) {
+    $query->condition('n.title', '%' . $filter . '%', 'LIKE');
+  }
+
+  // Modify the query for the 'Language' filter
+  if ($filter = isset($filters['language']) ? $filters['language'] : NULL) {
+    $query->condition('n.language', $filter);
+  }
+}

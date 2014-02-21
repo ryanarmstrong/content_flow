@@ -1,0 +1,91 @@
+<?php
+
+/**
+ * @file
+ * Page callbacks for NVIDIA Flow
+ */
+
+/**
+ * Impliments hook_enable().
+ */
+function nvidia_flow_install() {
+  // Create a writer role for content creators
+  $writer_role = new stdClass();
+  $writer_role->name = 'writer';
+  $writer_role->weight = 2;
+  user_role_save($writer_role);
+
+  // Create a editor role for content editors
+  $editor_role = new stdClass();
+  $editor_role->name = 'editor';
+  $editor_role->weight = 3;
+  user_role_save($editor_role);
+}
+
+/**
+ * Implements hook_menu().
+ */
+function nvidia_flow_schema() {
+  $schema['nvidia_flow_activity'] = array(
+    'description' => 'Stores an activty log of the site\'s content.',
+    'fields' => array(
+      'aid' => array(
+        'type' => 'serial',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+        'description' => 'Primary Key: Unique activty event ID.',
+      ),
+      'uid' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'The {users}.uid of the user who triggered the activity.',
+      ),
+      'oid' => array(
+        'type' => 'int',
+        'default value' => NULL,
+        'unsigned' => TRUE,
+        'description' => 'The id of the object being acted on.',
+      ),
+      'object_type' => array(
+        'type' => 'varchar',
+        'length' => '50',
+        'not null' => TRUE,
+        'description' => 'The type of object being acted upon (node, revision, user, etc.)',
+      ),
+      'activity_type' => array(
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'Type of activty.',
+      ),
+      'message' => array(
+        'type' => 'text',
+        'not null' => TRUE,
+        'size' => 'big',
+        'description' => 'Text of log message to be passed into the t() function.',
+      ),
+      'variables' => array(
+        'type' => 'blob',
+        'not null' => TRUE,
+        'size' => 'big',
+        'description' => 'Serialized array of variables that match the message string and that is passed into the t() function.',
+      ),
+      'timestamp' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Unix timestamp of when activty occurred.',
+      ),
+    ),
+    'primary key' => array('aid'),
+    'indexes' => array(
+      'activity_type' => array('activity_type'),
+      'uid' => array('uid'),
+      'object_type' => array('object_type'),
+    ),
+  );
+
+  return $schema;
+}
