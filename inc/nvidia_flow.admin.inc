@@ -6,13 +6,13 @@
  */
 
 function nvidia_flow_build_revisions_admin($variables) {
-  // Include filters if requested
+  // Include filters if requested.
   if (isset($variables['filters'])) {
     $form['filter'] = nvidia_flow_filter_form($variables);
     $form['#submit'] = array('nvidia_flow_filter_form_submit');
   }
 
-  // Build the main form
+  // Build the main form.
   $form['admin'] = nvidia_flow_admin_nodes($variables);
 
   return $form;
@@ -24,7 +24,7 @@ function nvidia_flow_build_revisions_admin($variables) {
 function nvidia_flow_revision_filters($variables) {
   $filters = array();
 
-  // Build the 'Status' filter
+  // Build the 'Status' filter.
   $options = array();
 
   if ($states = state_flow_get_all_states()) {
@@ -41,7 +41,7 @@ function nvidia_flow_revision_filters($variables) {
     ),
   );
 
-  // Build the 'Type' filter
+  // Build the 'Type' filter.
   $options = array();
 
   if ($types = node_type_get_types()) {
@@ -60,7 +60,7 @@ function nvidia_flow_revision_filters($variables) {
     ),
   );
 
-  // Build an 'Author' filter
+  // Build an 'Author' filter.
   $filters['author'] = array(
     'form' => array(
       '#type' => 'textfield',
@@ -70,7 +70,7 @@ function nvidia_flow_revision_filters($variables) {
     ),
   );
 
-  // Build an 'Title' filter
+  // Build an 'Title' filter.
   $filters['title'] = array(
     'form' => array(
       '#type' => 'textfield',
@@ -80,7 +80,7 @@ function nvidia_flow_revision_filters($variables) {
     ),
   );
 
-  // Build the 'Language' filter
+  // Build the 'Language' filter.
   $options = array();
 
   if ($languages = language_list()) {
@@ -106,30 +106,29 @@ function nvidia_flow_revision_filters($variables) {
  * Return form for node administration filters.
  */
 function nvidia_flow_filter_form($variables) {
-  // Create a unqiue ID for this form
+  // Create a unqiue ID for this form.
   $form_id = $variables['caller'] . '_node_revision_filter';
   $form['form_id'] = array(
     '#type' => 'value',
     '#value' => $form_id,
   );
 
-  // Check to see if any of the filters are set to be visible
+  // Check to see if any of the filters are set to be visible.
   $visible_filters = FALSE;
   foreach ($variables['filters'] as $filter) {
     $visible_filters = $filter['show'];
   }
 
-  // Set default filters, if given
+  // Set default filters, if given.
   foreach ($variables['filters'] as $filter_key => $filter) {
     if (isset($filter['default'])) {
-      $_SESSION[$form_id][$filter_key] = $filter['default'];
+      $_SESSION[$form_id][$filter_key] = isset($_SESSION[$form_id][$filter_key]) ? $_SESSION[$form_id][$filter_key] : $filter['default'];
     }
   }
 
   $session = isset($_SESSION[$form_id]) ? $_SESSION[$form_id] : array();
   $filters = nvidia_flow_revision_filters($variables);
 
-  $i = 0;
   $form['filters'] = array(
     '#type' => 'fieldset',
     '#title' => t('Show only items where') . '<span class="caret"></span>',
@@ -173,7 +172,7 @@ function nvidia_flow_filter_form($variables) {
  * Process result from node administration filter form.
  */
 function nvidia_flow_filter_form_submit($form, &$form_state) {
-  // Set ID
+  // Set ID.
   $form_id = $form_state['values']['form_id'];
 
   $filters = nvidia_flow_revision_filters();
@@ -187,9 +186,11 @@ function nvidia_flow_filter_form_submit($form, &$form_state) {
         }
       }
       break;
+
     case t('Undo'):
       array_pop($_SESSION[$form_id]);
       break;
+
     case t('Reset'):
       $_SESSION[$form_id] = array();
       break;
@@ -200,9 +201,9 @@ function nvidia_flow_filter_form_submit($form, &$form_state) {
  * Form builder: Builds the node administration overview.
  */
 function nvidia_flow_admin_nodes($variables) {
-  // Set the ID
+  // Set the ID.
   $form_id = $variables['caller'] . '_node_revision_filter';
-  
+
   $admin_access = user_access('administer content revisions');
 
   // Build the 'Update options' form if requested.
@@ -246,7 +247,7 @@ function nvidia_flow_admin_nodes($variables) {
     'status' => array('data' => t('Status'), 'class' => 'hidden-xs'),
   );
 
-  // Conditionally remove unneeded columns
+  // Conditionally remove unneeded columns.
   if (isset($variables['columns'])) {
     foreach ($variables['columns'] as $column => $status) {
       if ($status === FALSE) {
@@ -263,7 +264,7 @@ function nvidia_flow_admin_nodes($variables) {
     $query = db_select('node', 'n')->extend('PagerDefault')->extend('TableSort');
   }
 
-  // Toggle whether to view this from a node or revision perspective
+  // Toggle whether to view this from a node or revision perspective.
   if ($variables['content_view'] == 'node') {
     $query->leftJoin('node_revision_states', 'nrs', 'n.vid = nrs.vid');
     $query->leftJoin('users', 'u', 'n.uid = u.uid');
@@ -282,18 +283,18 @@ function nvidia_flow_admin_nodes($variables) {
     ->addTag('node_revision')
     ->addMetaData('filters', $filters);
 
-  // Set the range if provided
+  // Set the range if provided.
   if (isset($variables['limit'])) {
     $query->range(0, $variables['limit']);
   } else {
     $query->limit(50);
   }
 
-  // Set the order if provided
+  // Set the order if provided.
   if (isset($variables['orderby'])) {
     $query->orderBy($variables['orderby']['field'], $variables['orderby']['sort']);
   }
-  
+
   $rows = $query->execute();
 
   $options = array();
@@ -302,24 +303,24 @@ function nvidia_flow_admin_nodes($variables) {
     $destination = drupal_get_destination();
 
     foreach ($rows as $row) {
-      // Set the default presentation of the status column
+      // Set the default presentation of the status column.
       $status = array(
         'data' => '<span class="label label-default">' . $row->state . '</span>',
         'class' => 'hidden-xs',
       );
 
-      // Set the default vid of the row
+      // Set the default vid of the row.
       $latest_revision_vid = $row->nrs_vid;
 
-      // Generate the key based on whether we are viewing from a node or revision perspective
+      // Generate key based on whether we are viewing a node or revision.
       if ($variables['content_view'] == 'node') {
         $key = $row->nid;
         $node = node_load($row->nid, $row->nrs_vid);
         if ($row->state == 'published') {
           $states = state_flow_get_revisions($node->nid);
-          $latest_revision_timestamp = 0;
+          $latest_revision = 0;
           foreach ($states as $state) {
-            if ($state->status == 1 && $state->state != 'published' && $state->timestamp > $latest_revision_timestamp) {
+            if ($state->status == 1 && $state->state != 'published' && $state->timestamp > $latest_revision) {
               $latest_revision_vid = $state->vid;
               if ($state->state == 'needs review') {
                 $status = array(
@@ -332,9 +333,9 @@ function nvidia_flow_admin_nodes($variables) {
                   'class' => 'hidden-xs',
                 );
               }
-              
+
             }
-            $latest_revision_timestamp = $state->timestamp;
+            $latest_revision = $state->timestamp;
           }
         }
       } else {
@@ -353,7 +354,7 @@ function nvidia_flow_admin_nodes($variables) {
           'data' => check_plain(node_type_get_name($row->type)),
           'class' => 'hidden-xs',
         ),
-        'changed' => format_interval((time() - $row->changed) , 2) . t(' ago'),
+        'changed' => t('!time ago', array('!time' => format_interval((time() - $row->changed), 2))),
         'author' => array(
           'data' => array(
             '#type' => 'link',
@@ -365,7 +366,7 @@ function nvidia_flow_admin_nodes($variables) {
         'status' => $status,
       );
 
-      // Conditionally remove unneeded columns
+      // Conditionally remove unneeded columns.
       if (isset($variables['columns'])) {
         foreach ($variables['columns'] as $column => $status) {
           if ($status === FALSE) {
@@ -470,7 +471,8 @@ function nvidia_flow_admin_nodes_submit($form, &$form_state) {
   $operations = module_invoke_all('node_revision_operations');
   drupal_alter('nvidia_flow_node_revision_operations', $operations);
   $operation = $operations[$form_state['values']['operation']];
-  // Filter out unchecked nodes
+
+  // Filter out unchecked nodes.
   $keys = array_filter($form_state['values']['nodes']);
   $keys = array_map('_nvidia_flow_split_keys', $keys);
 
@@ -494,7 +496,7 @@ function nvidia_flow_admin_nodes_submit($form, &$form_state) {
 }
 
 /**
- * Helper function to to split the keys
+ * Helper function to to split the keys.
  */
 function _nvidia_flow_split_keys($key) {
   list($nid, $vid) = explode(':::', $key);

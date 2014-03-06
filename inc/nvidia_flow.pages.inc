@@ -10,7 +10,7 @@
  */
 function nvidia_flow_dashboard_page() {
   $build = '<p></p>';
-  
+
   return $build;
 }
 
