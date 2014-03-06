@@ -10,6 +10,29 @@
 function nvidia_flow_feature_user_default_permissions() {
   $permissions = array();
 
+  // Exported permission: 'access content dashboard'.
+  $permissions['access content dashboard'] = array(
+    'name' => 'access content dashboard',
+    'roles' => array(
+      'administrator' => 'administrator',
+      'authenticated user' => 'authenticated user',
+      'editor' => 'editor',
+      'writer' => 'writer',
+    ),
+    'module' => 'nvidia_flow',
+  );
+
+  // Exported permission: 'access navbar'.
+  $permissions['access navbar'] = array(
+    'name' => 'access navbar',
+    'roles' => array(
+      'administrator' => 'administrator',
+      'editor' => 'editor',
+      'writer' => 'writer',
+    ),
+    'module' => 'navbar',
+  );
+
   // Exported permission: 'administer content revisions'.
   $permissions['administer content revisions'] = array(
     'name' => 'administer content revisions',

@@ -18,7 +18,7 @@ function nvidia_flow_menu() {
     'description' => 'Show all content on the site.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('nvidia_flow_all_content_page'),
-    'access arguments' => array('access content overview'),
+    'access arguments' => array('access content dashboard'),
     'file' => 'inc/nvidia_flow.pages.inc',
     'type' => MENU_LOCAL_TASK,
     'weight' => -3,
@@ -38,7 +38,7 @@ function nvidia_flow_menu() {
     'description' => 'Show all content that is authored by the current user.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('nvidia_flow_my_content_page'),
-    'access arguments' => array('access content overview'),
+    'access arguments' => array('access content dashboard'),
     'file' => 'inc/nvidia_flow.pages.inc',
     'type' => MENU_LOCAL_TASK,
     'weight' => -5,
@@ -46,7 +46,7 @@ function nvidia_flow_menu() {
   $items['admin/content/node/all-content/add'] = array(
     'title' => 'Add content',
     'page callback' => 'node_add_page',
-    'access arguments' => 'access content overview',
+    'access arguments' => 'access content dashboard',
     'file path' => drupal_get_path('module', 'node'),
     'file' => 'node.pages.inc',
     'type' => MENU_LOCAL_ACTION,
@@ -54,7 +54,7 @@ function nvidia_flow_menu() {
   $items['admin/content/node/review/add'] = array(
     'title' => 'Add content',
     'page callback' => 'node_add_page',
-    'access arguments' => 'access content overview',
+    'access arguments' => 'access content dashboard',
     'file path' => drupal_get_path('module', 'node'),
     'file' => 'node.pages.inc',
     'type' => MENU_LOCAL_ACTION,
@@ -70,7 +70,7 @@ function nvidia_flow_menu_alter(&$items) {
   // Take over the admin/content page
   $items['admin/content']['title'] = 'Content Dashboard';
   $items['admin/content']['page callback'] = 'nvidia_flow_dashboard_page';
-  $items['admin/content']['access arguments'] = array('access content overview');
+  $items['admin/content']['access arguments'] = array('access content dashboard');
   unset($items['admin/content']['page arguments']);
   $module = drupal_get_path('module', 'nvidia_flow');
   $items['admin/content']['file path'] = $module . '/inc/';
@@ -88,6 +88,10 @@ function nvidia_flow_permission() {
     'approve and reject content' => array(
       'title' => t('Approve and reject content'),
       'description' => t('Approve or reject content, tranisionting it to either the published or draft state.'),
+    ),
+    'access content dashboard' => array(
+      'title' => t('Access content dashboard'),
+      'description' => t('Allow the user to access the dashboard containing an overview of content on the site.'),
     ),
 	);
 }
@@ -191,7 +195,7 @@ function nvidia_flow_block_info() {
   $blocks['activity_monitor'] = array(
     'info' => t('NVIDIA Flow: Latest Activity'),
   );
- 
+
   return $blocks;
 }
 
@@ -200,7 +204,7 @@ function nvidia_flow_block_info() {
  */
 function nvidia_flow_block_view($delta='') {
   $block = array();
- 
+
   switch($delta) {
     case 'my_latest_content' :
       $block['subject'] = t('My Latest Content');
@@ -217,7 +221,7 @@ function nvidia_flow_block_view($delta='') {
       $block['content'] = latest_activity_block();
       break;
   }
- 
+
   return $block;
 }
 
