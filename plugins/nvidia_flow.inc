@@ -56,7 +56,7 @@ class NvidiaFlow extends StateFlow {
     ));
     $this->create_event('schedule', array(
       'label' => t('Schedule'),
-      'origin' => 'draft',
+      'origin' => 'needs review',
       'target' => 'scheduled',
       'guard' => 'state_flow_guard_schedule',
       'after_transition' => 'after_transition_scheduled',
