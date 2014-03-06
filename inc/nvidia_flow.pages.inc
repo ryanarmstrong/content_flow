@@ -32,6 +32,7 @@ function nvidia_flow_needs_review_page($form, $form_state) {
       'status' => FALSE,
     ),
     'caller' => 'nvidia_flow_needs_review_page',
+    'table_id' => 'content-table',
   );
   $form = nvidia_flow_build_revisions_admin($variables);
 
@@ -54,6 +55,7 @@ function nvidia_flow_all_content_page($form, $form_state) {
     'update_options' => TRUE,
     'content_view' => 'node',
     'caller' => 'nvidia_flow_all_content_page',
+    'table_id' => 'content-table',
   );
   $form = nvidia_flow_build_revisions_admin($variables);
 
@@ -78,6 +80,7 @@ function nvidia_flow_my_content_page($form, $form_state) {
       'author' => FALSE,
     ),
     'caller' => 'nvidia_flow_my_content_page',
+    'table_id' => 'content-table',
   );
   $form = nvidia_flow_build_revisions_admin($variables);
 

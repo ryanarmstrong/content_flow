@@ -433,6 +433,7 @@ function nvidia_flow_admin_nodes($variables) {
     '#header' => $header,
     '#options' => $options,
     '#empty' => t('No content available.'),
+    '#attributes' => array('id' => $variables['table_id']),
   );
 
   $form['pager'] = array('#markup' => theme('pager'));

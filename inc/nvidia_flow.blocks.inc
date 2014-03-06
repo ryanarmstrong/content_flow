@@ -22,6 +22,7 @@ function my_latest_content_block($form, $form_state) {
     'pager' => FALSE,
     'more' => 'admin/content/node/my-content',
     'caller' => 'my_latest_content_block',
+    'table_id' => 'my-latest-content-block-table',
   );
   $form = nvidia_flow_build_revisions_admin($variables);
 
@@ -45,6 +46,7 @@ function needs_review_block($form, $form_state) {
     'pager' => FALSE,
     'more' => 'admin/content/node/review',
     'caller' => 'needs_review_block',
+    'table_id' => 'needs-review-block-table',
   );
   $form = nvidia_flow_build_revisions_admin($variables);
 
@@ -77,7 +79,7 @@ function latest_activity_block() {
   $rows = array();
 
   $block = theme('table', array(
-    'header' => $header, 
+    'header' => $header,
     'rows' => $activities,
     'empty' => 'No activity has been reported. All quite on the front!',
   ));
