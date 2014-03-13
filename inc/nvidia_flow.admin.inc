@@ -344,11 +344,7 @@ function nvidia_flow_admin_nodes($variables) {
 
       $options[$key] = array(
         'title' => array(
-          'data' => array(
-            '#type' => 'link',
-            '#title' => $row->title,
-            '#href' => 'node/' . $row->nid,
-          ),
+          'data' => l($row->title, 'node/' . $row->nid),
         ),
         'type' => array(
           'data' => check_plain(node_type_get_name($row->type)),
