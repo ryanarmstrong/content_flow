@@ -1,7 +1,0 @@
-<?php
-/**
- * @file
- * Code for the NVIDIA Flow Feature feature.
- */
-
-include_once 'nvidia_flow_feature.features.inc';
