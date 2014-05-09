@@ -5,7 +5,6 @@
  * NVIDIA Flow implementation of the State Flow module
  */
 
-include 'inc/nvidia_flow.blocks.inc';
 include 'inc/nvidia_flow.admin.inc';
 include 'inc/nvidia_flow.activity.inc';
 
@@ -176,52 +175,6 @@ function nvidia_flow_user_update(&$edit, $account, $category) {
       nvidia_flow_activity_log($account, 'updated_user_roles', array('added_role' => $added_role_name));
     }
   }
-}
-
-/**
- * Implements hook_block_info().
- */
-function nvidia_flow_block_info() {
-  $blocks = array();
-  $blocks['my_latest_content'] = array(
-    'info' => t('NVIDIA Flow: My Lastest Content'),
-  );
-  $blocks['needs_review'] = array(
-    'info' => t('NVIDIA Flow: Needs Review'),
-  );
-  $blocks['activity_monitor'] = array(
-    'info' => t('NVIDIA Flow: Latest Activity'),
-  );
-
-  return $blocks;
-}
-
-/**
- * Implements hook_block_view().
- */
-function nvidia_flow_block_view($delta = '') {
-  $block = array();
-
-  switch ($delta) {
-    case 'my_latest_content':
-      $block['subject'] = t('My Latest Content');
-      $block['content'] = drupal_get_form('my_latest_content_block');
-      break;
-
-    case 'needs_review':
-      if (user_access('approve and reject content')) {
-        $block['subject'] = t('Content Needing Review');
-        $block['content'] = drupal_get_form('needs_review_block');
-      }
-      break;
-
-    case 'activity_monitor':
-      $block['subject'] = t('Latest Activity');
-      $block['content'] = latest_activity_block();
-      break;
-  }
-
-  return $block;
 }
 
 /**
