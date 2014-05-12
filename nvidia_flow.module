@@ -5,8 +5,7 @@
  * NVIDIA Flow implementation of the State Flow module
  */
 
-include 'inc/nvidia_flow.admin.inc';
-include 'inc/nvidia_flow.activity.inc';
+require_once 'inc/nvidia_flow.activity.inc';
 
 /**
  * Implements hook_menu_alter().
@@ -35,7 +34,8 @@ function nvidia_flow_menu_alter(&$items) {
     'page callback' => 'drupal_get_form',
     'page arguments' => array('nvidia_flow_all_content_page'),
     'access arguments' => array('access content overview'),
-    'file' => 'inc/nvidia_flow.pages.inc',
+    'file path' => $module . '/inc/',
+    'file' => 'nvidia_flow.pages.inc',
     'type' => MENU_LOCAL_TASK,
     'weight' => -3,
   );
@@ -45,7 +45,8 @@ function nvidia_flow_menu_alter(&$items) {
     'page callback' => 'drupal_get_form',
     'page arguments' => array('nvidia_flow_needs_review_page'),
     'access arguments' => array('approve and reject content'),
-    'file' => 'inc/nvidia_flow.pages.inc',
+    'file path' => $module . '/inc/',
+    'file' => 'nvidia_flow.pages.inc',
     'type' => MENU_LOCAL_TASK,
     'weight' => -4,
   );
@@ -55,7 +56,8 @@ function nvidia_flow_menu_alter(&$items) {
     'page callback' => 'drupal_get_form',
     'page arguments' => array('nvidia_flow_my_content_page'),
     'access arguments' => array('access content overview'),
-    'file' => 'inc/nvidia_flow.pages.inc',
+    'file path' => $module . '/inc/',
+    'file' => 'nvidia_flow.pages.inc',
     'type' => MENU_LOCAL_TASK,
     'weight' => -5,
   );
