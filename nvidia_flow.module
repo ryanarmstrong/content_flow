@@ -9,15 +9,32 @@ include 'inc/nvidia_flow.admin.inc';
 include 'inc/nvidia_flow.activity.inc';
 
 /**
- * Implements hook_menu().
+ * Implements hook_menu_alter().
  */
-function nvidia_flow_menu() {
+function nvidia_flow_menu_alter(&$items) {
+  unset($items['admin/content']);
+  unset($items['admin/content/node']);
+  $module = drupal_get_path('module', 'nvidia_flow');
+  $items['admin/content'] = array(
+    'title' => 'Content Dashboard',
+    'description' => 'Find and manage content.',
+    'page callback' => 'nvidia_flow_dashboard_page',
+    'access arguments' => array('access content overview'),
+    'weight' => -10,
+    'file path' => $module . '/inc/',
+    'file' => 'nvidia_flow.pages.inc',
+  );
+  $items['admin/content/node'] = array(
+    'title' => 'Content Dashboard',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10,
+  );
   $items['admin/content/node/all-content'] = array(
     'title' => 'All Content',
     'description' => 'Show all content on the site.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('nvidia_flow_all_content_page'),
-    'access arguments' => array('access content dashboard'),
+    'access arguments' => array('access content overview'),
     'file' => 'inc/nvidia_flow.pages.inc',
     'type' => MENU_LOCAL_TASK,
     'weight' => -3,
@@ -37,7 +54,7 @@ function nvidia_flow_menu() {
     'description' => 'Show all content that is authored by the current user.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('nvidia_flow_my_content_page'),
-    'access arguments' => array('access content dashboard'),
+    'access arguments' => array('access content overview'),
     'file' => 'inc/nvidia_flow.pages.inc',
     'type' => MENU_LOCAL_TASK,
     'weight' => -5,
@@ -45,7 +62,7 @@ function nvidia_flow_menu() {
   $items['admin/content/node/all-content/add'] = array(
     'title' => 'Add content',
     'page callback' => 'node_add_page',
-    'access arguments' => 'access content dashboard',
+    'access arguments' => 'access content overview',
     'file path' => drupal_get_path('module', 'node'),
     'file' => 'node.pages.inc',
     'type' => MENU_LOCAL_ACTION,
@@ -53,27 +70,11 @@ function nvidia_flow_menu() {
   $items['admin/content/node/review/add'] = array(
     'title' => 'Add content',
     'page callback' => 'node_add_page',
-    'access arguments' => 'access content dashboard',
+    'access arguments' => 'access content overview',
     'file path' => drupal_get_path('module', 'node'),
     'file' => 'node.pages.inc',
     'type' => MENU_LOCAL_ACTION,
   );
-
-  return $items;
-}
-
-/**
- * Implements hook_menu_alter().
- */
-function nvidia_flow_menu_alter(&$items) {
-  // Take over the admin/content page.
-  $items['admin/content']['title'] = 'Content Dashboard';
-  $items['admin/content']['page callback'] = 'nvidia_flow_dashboard_page';
-  $items['admin/content']['access arguments'] = array('access content dashboard');
-  unset($items['admin/content']['page arguments']);
-  $module = drupal_get_path('module', 'nvidia_flow');
-  $items['admin/content']['file path'] = $module . '/inc/';
-  $items['admin/content']['file'] = 'nvidia_flow.pages.inc';
 
   // Remove the content revisions page that State Flow adds.
   unset($items['admin/content/content-revisions']);
