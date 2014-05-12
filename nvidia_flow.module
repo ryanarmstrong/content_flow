@@ -89,10 +89,6 @@ function nvidia_flow_permission() {
       'title' => t('Approve and reject content'),
       'description' => t('Approve or reject content, tranisionting it to either the published or draft state.'),
     ),
-    'access content dashboard' => array(
-      'title' => t('Access content dashboard'),
-      'description' => t('Allow the user to access the dashboard containing an overview of content on the site.'),
-    ),
   );
 }
 
