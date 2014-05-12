@@ -5,14 +5,26 @@
  * Page callbacks for NVIDIA Flow
  */
 
+require_once 'nvidia_flow.admin.inc';
+
 /**
  * Menu callback; presents the node editing form.
  */
 function nvidia_flow_dashboard_page() {
   // Build the 'My Latest Content' section.
-  $build = drupal_render(drupal_get_form('my_latest_content_block'));
+  $build .= '<div class="row">';
+  $build = '<section id="my-latest-content" class="col-md-6">';
+  $build .= '<h2>My Latest Content</h2>';
+  $build .= drupal_render(drupal_get_form('my_latest_content'));
+  $build .= '</section>';
+
   // Build the 'Needs Review' section.
-  $build .= drupal_render(drupal_get_form('needs_review_block'));
+  $build .= '<section id="needs-review" class="col-md-6">';
+  $build .= '<h2>Needs Review</h2>';
+  $build .= drupal_render(drupal_get_form('needs_review'));
+  $build .= '</section>';
+  $build .= '</div>';
+
   // Build the activities section.
   $header = array(
     'message' => array('data' => t('Message')),
@@ -30,11 +42,17 @@ function nvidia_flow_dashboard_page() {
     'date_format' => 'ago',
   );
   $activities = nvidia_flow_get_activities($options);
+
+  $build .= '<div class="row">';
+  $build .= '<section id="latest-activity" class="col-lg-12">';
+  $build .= '<h2>Recent Activity</h2>';
   $build .= theme('table', array(
     'header' => $header,
     'rows' => $activities,
     'empty' => 'No activity has been reported. All quite on the front!',
   ));
+  $build .= '</section>';
+  $build .= '</div>';
 
   return $build;
 }
@@ -115,7 +133,7 @@ function nvidia_flow_my_content_page($form, $form_state) {
 /**
  * Section; builds the My Latest Content section.
  */
-function my_latest_content_block($form, $form_state) {
+function my_latest_content($form, $form_state) {
   global $user;
   $variables = array(
     'filters' => array(
@@ -139,7 +157,7 @@ function my_latest_content_block($form, $form_state) {
 /**
  * Section; builds the Needs Review section.
  */
-function needs_review_block($form, $form_state) {
+function needs_review($form, $form_state) {
   global $user;
   $variables = array(
     'filters' => array(
