@@ -12,8 +12,8 @@ require_once 'nvidia_flow.admin.inc';
  */
 function nvidia_flow_dashboard_page() {
   // Build the 'My Latest Content' section.
-  $build .= '<div class="row">';
-  $build = '<section id="my-latest-content" class="col-md-6">';
+  $build = '<div class="row">';
+  $build .= '<section id="my-latest-content" class="col-md-6">';
   $build .= '<h2>My Latest Content</h2>';
   $build .= drupal_render(drupal_get_form('my_latest_content'));
   $build .= '</section>';
