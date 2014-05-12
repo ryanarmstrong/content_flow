@@ -207,7 +207,7 @@ function nvidia_flow_admin_nodes($variables) {
   $admin_access = user_access('administer content revisions');
 
   // Build the 'Update options' form if requested.
-  if ($variables['update_options'] === TRUE) {
+  if (!empty($variables['update_options'])) {
     $form['options'] = array(
       '#type' => 'fieldset',
       '#title' => t('Update options') . '<span class="caret"></span>',
@@ -258,14 +258,14 @@ function nvidia_flow_admin_nodes($variables) {
 
   $header['operations'] = array('data' => t('Operations'));
 
-  if ($variables['pager'] === FALSE) {
-    $query = db_select('node', 'n')->extend('TableSort');
-  } else {
+  $query = db_select('node', 'n')->extend('TableSort');
+  if (!empty($variables['pager'])) {
     $query = db_select('node', 'n')->extend('PagerDefault')->extend('TableSort');
+    $query->limit(50);
   }
 
   // Toggle whether to view this from a node or revision perspective.
-  if ($variables['content_view'] == 'node') {
+  if (!empty($variables['content_view']) && $variables['content_view'] == 'node') {
     $query->leftJoin('node_revision_states', 'nrs', 'n.vid = nrs.vid');
     $query->leftJoin('users', 'u', 'n.uid = u.uid');
   } else {
@@ -286,8 +286,6 @@ function nvidia_flow_admin_nodes($variables) {
   // Set the range if provided.
   if (isset($variables['limit'])) {
     $query->range(0, $variables['limit']);
-  } else {
-    $query->limit(50);
   }
 
   // Set the order if provided.
@@ -313,7 +311,7 @@ function nvidia_flow_admin_nodes($variables) {
       $latest_revision_vid = $row->nrs_vid;
 
       // Generate key based on whether we are viewing a node or revision.
-      if ($variables['content_view'] == 'node') {
+      if (!empty($variables['content_view']) && $variables['content_view'] == 'node') {
         $key = $row->nid;
         $node = node_load($row->nid, $row->nrs_vid);
         if ($row->state == 'published') {
@@ -434,7 +432,7 @@ function nvidia_flow_admin_nodes($variables) {
 
   $form['pager'] = array('#markup' => theme('pager'));
 
-  if ($variables['more']) {
+  if (!empty($variables['more'])) {
     $form['more'] = array(
       '#type' => 'link',
       '#title' => t('More'),

@@ -15,13 +15,15 @@ function nvidia_flow_dashboard_page() {
   $build = '<div class="row">';
   $build .= '<section id="my-latest-content" class="col-md-6">';
   $build .= '<h2>My Latest Content</h2>';
-  $build .= drupal_render(drupal_get_form('my_latest_content'));
+  $form = drupal_get_form('my_latest_content');
+  $build .= drupal_render($form);
   $build .= '</section>';
 
   // Build the 'Needs Review' section.
   $build .= '<section id="needs-review" class="col-md-6">';
   $build .= '<h2>Needs Review</h2>';
-  $build .= drupal_render(drupal_get_form('needs_review'));
+  $form = drupal_get_form('needs_review');
+  $build .= drupal_render($form);
   $build .= '</section>';
   $build .= '</div>';
 
@@ -76,6 +78,7 @@ function nvidia_flow_needs_review_page($form, $form_state) {
     ),
     'caller' => 'nvidia_flow_needs_review_page',
     'table_id' => 'content-table',
+    'pager' => TRUE,
   );
   $form = nvidia_flow_build_revisions_admin($variables);
 
@@ -99,6 +102,7 @@ function nvidia_flow_all_content_page($form, $form_state) {
     'content_view' => 'node',
     'caller' => 'nvidia_flow_all_content_page',
     'table_id' => 'content-table',
+    'pager' => TRUE,
   );
   $form = nvidia_flow_build_revisions_admin($variables);
 
@@ -124,6 +128,7 @@ function nvidia_flow_my_content_page($form, $form_state) {
     ),
     'caller' => 'nvidia_flow_my_content_page',
     'table_id' => 'content-table',
+    'pager' => TRUE,
   );
   $form = nvidia_flow_build_revisions_admin($variables);
 
@@ -144,7 +149,6 @@ function my_latest_content($form, $form_state) {
       'author' => FALSE,
     ),
     'limit' => 5,
-    'pager' => FALSE,
     'more' => 'admin/content/node/my-content',
     'caller' => 'my_latest_content_block',
     'table_id' => 'my-latest-content-block-table',
@@ -168,7 +172,6 @@ function needs_review($form, $form_state) {
       'status' => FALSE,
     ),
     'limit' => 5,
-    'pager' => FALSE,
     'more' => 'admin/content/node/review',
     'caller' => 'needs_review_block',
     'table_id' => 'needs-review-block-table',
