@@ -8,7 +8,7 @@
 require_once 'nvidia_flow.admin.inc';
 
 /**
- * Menu callback; presents the node editing form.
+ * Page callback; presents the node editing form.
  */
 function nvidia_flow_dashboard_page() {
   // Build the 'My Latest Content' section.
@@ -179,4 +179,11 @@ function needs_review($form, $form_state) {
   $form = nvidia_flow_build_revisions_admin($variables);
 
   return $form;
+}
+
+/**
+ * Page callback; redirects to the node create page.
+ */
+function nvidia_flow_create_content() {
+  drupal_goto('node/add');
 }

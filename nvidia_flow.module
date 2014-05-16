@@ -61,20 +61,28 @@ function nvidia_flow_menu_alter(&$items) {
     'type' => MENU_LOCAL_TASK,
     'weight' => -5,
   );
+  $items['admin/content/node/my-content/add'] = array(
+    'title' => 'Add content',
+    'page callback' => 'nvidia_flow_create_content',
+    'access arguments' => 'access content overview',
+    'file path' => $module . '/inc/',
+    'file' => 'nvidia_flow.pages.inc',
+    'type' => MENU_LOCAL_ACTION,
+  );
   $items['admin/content/node/all-content/add'] = array(
     'title' => 'Add content',
-    'page callback' => 'node_add_page',
+    'page callback' => 'nvidia_flow_create_content',
     'access arguments' => 'access content overview',
-    'file path' => drupal_get_path('module', 'node'),
-    'file' => 'node.pages.inc',
+    'file path' => $module . '/inc/',
+    'file' => 'nvidia_flow.pages.inc',
     'type' => MENU_LOCAL_ACTION,
   );
   $items['admin/content/node/review/add'] = array(
     'title' => 'Add content',
-    'page callback' => 'node_add_page',
+    'page callback' => 'nvidia_flow_create_content',
     'access arguments' => 'access content overview',
-    'file path' => drupal_get_path('module', 'node'),
-    'file' => 'node.pages.inc',
+    'file path' => $module . '/inc/',
+    'file' => 'nvidia_flow.pages.inc',
     'type' => MENU_LOCAL_ACTION,
   );
 
