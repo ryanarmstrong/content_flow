@@ -39,6 +39,10 @@ function nvidia_flow_activity_log($object, $type, $variables = array()) {
   
   $message = '';
 
+  if(!isset($object->path['alias'])){
+    $object->path['alias'] = url('node/'. $object->nid);
+  }
+
   // Build the message based on the type of activity
   switch ($type) {
     case 'new_content':
