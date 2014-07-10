@@ -92,6 +92,9 @@ function nvidia_flow_menu_alter(&$items) {
   $items['node/%node/edit']['title callback'] = 'nvidia_flow_edit_tab_title';
   $items['node/%node/edit']['title arguments'] = array(1);
 
+  // Override the node view menu item title.
+  $items['node/%node/view']['title callback'] = 'nvidia_flow_view_tab_title';
+  $items['node/%node/view']['title arguments'] = array(1);
 }
 
 /**
@@ -234,6 +237,22 @@ function nvidia_flow_edit_tab_title($node) {
     return t('Edit draft');
   }
   return t('New draft');
+}
+
+/**
+ * Change the name of the node edit tab, conditionally.
+ *
+ * @param $node
+ *   The node being acted upon.
+ *
+ * @return
+ *   The title for the tab.
+ */
+function nvidia_flow_view_tab_title($node) {
+  if ($node->status == '1') {
+    return t('View published');
+  }
+  return t('View draft');
 }
 
 /**
