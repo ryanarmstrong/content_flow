@@ -88,6 +88,11 @@ function nvidia_flow_menu_alter(&$items) {
 
   // Remove the content revisions page that State Flow adds.
   unset($items['admin/content/content-revisions']);
+  // Override the node/X/edit page to ensure that the right revision (most current) is displayed.
+  $items['node/%node/edit']['page callback'] = 'nvidia_flow_node_edit_page_override';
+  $items['node/%node/edit']['file path'] = $module . '/inc/';
+  $items['node/%node/edit']['file'] = 'nvidia_flow.pages.inc';
+
   // Override the node edit menu item title.
   $items['node/%node/edit']['title callback'] = 'nvidia_flow_edit_tab_title';
   $items['node/%node/edit']['title arguments'] = array(1);
@@ -271,5 +276,23 @@ function nvidia_flow_node_working_draft($node) {
     }
   }
   return FALSE;
+}
+
+/**
+ * Helper function to return the latest published or working draft of a node.
+ *
+ * @param $node
+ *   The node being acted upon.
+ * @return
+ *   A node editing form.
+ */
+function nvidia_flow_node_latest_revision($node) {
+  $states = state_flow_get_revisions($node->nid);
+  foreach ($states as $state) {
+    if (($state->state == 'draft' || $state->state == 'needs review') && $state->status == '1') {
+      $node = node_load($node->nid, $state->vid);
+    }
+  }
+  return $node;
 }
 
