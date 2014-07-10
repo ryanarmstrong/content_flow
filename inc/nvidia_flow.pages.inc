@@ -11,20 +11,29 @@ require_once 'nvidia_flow.admin.inc';
  * Page callback; presents the node editing form.
  */
 function nvidia_flow_dashboard_page() {
-  // Build the 'My Latest Content' section.
+  $width_class = 'col-md-12';
   $build = '<div class="row">';
-  $build .= '<section id="my-latest-content" class="col-md-6">';
-  $build .= '<h2>My Latest Content</h2>';
-  $form = drupal_get_form('my_latest_content');
-  $build .= drupal_render($form);
-  $build .= '</section>';
 
   // Build the 'Needs Review' section.
-  $build .= '<section id="needs-review" class="col-md-6">';
-  $build .= '<h2>Needs Review</h2>';
-  $form = drupal_get_form('needs_review');
-  $build .= drupal_render($form);
-  $build .= '</section>';
+  if (user_access('approve and reject content')) {
+    $needs_review_block = '<section id="needs-review" class="col-md-6">';
+    $needs_review_block .= '<h2>Needs Review</h2>';
+    $form = drupal_get_form('needs_review');
+    $needs_review_block .= drupal_render($form);
+    $needs_review_block .= '</section>';
+    $width_class = 'col-md-6';
+  }
+
+  // Build the 'My Latest Content' section.
+  $my_latest_content_block .= '<section id="my-latest-content" class="' . $width_class . '">';
+  $my_latest_content_block .= '<h2>My Latest Content</h2>';
+  $form = drupal_get_form('my_latest_content');
+  $my_latest_content_block .= drupal_render($form);
+  $my_latest_content_block .= '</section>';
+
+  $build .= $my_latest_content_block;
+  $build .= $needs_review_block;
+
   $build .= '</div>';
 
   // Build the activities section.
