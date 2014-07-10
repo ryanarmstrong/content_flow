@@ -368,10 +368,17 @@ function nvidia_flow_admin_nodes($variables) {
 
       // Build a list of all the accessible operations for the current node.
       $operations = array();
-      if (user_access('administer nodes')) {
+      if (node_access('update', $node)) {
+        $edit_title = 'new draft';
+        $states = state_flow_get_revisions($row->nid);
+        foreach ($states as $state) {
+          if ($state->vid == $latest_revision_vid && ($state->state == 'draft' || $state->state == 'needs review')) {
+            $edit_title = 'edit draft';
+          }
+        }
         $operations['edit'] = array(
-          'title' => t('edit'),
           'href' => 'node/' . $row->nid . '/revisions/' . $latest_revision_vid . '/edit',
+          'title' => t($edit_title),
           'query' => $destination,
         );
       }
