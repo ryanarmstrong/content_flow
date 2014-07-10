@@ -34,13 +34,6 @@ class NvidiaFlow extends StateFlow {
       'target' => 'needs review',
       'after_transition' => 'after_transition_needs_review',
     ));
-    $this->create_event('immediate publish', array(
-      'label' => t('Publish Immediately'),
-      'origin' => 'draft',
-      'target' => 'published',
-      'guard' => 'nvidia_flow_guard_publish',
-      'after_transition' => 'after_transition_immediate_publish',
-    ));
     $this->create_event('needs work', array(
       'label' => t('Needs Work'),
       'origin' => array('needs review', 'scheduled', 'unpublished'),
@@ -49,7 +42,7 @@ class NvidiaFlow extends StateFlow {
     ));
     $this->create_event('publish', array(
       'label' => t('Publish'),
-      'origin' => array('needs review', 'scheduled', 'unpublished'),
+      'origin' => array('draft', 'needs review', 'scheduled', 'unpublished'),
       'target' => 'published',
       'guard' => 'nvidia_flow_guard_publish',
       'after_transition' => 'after_transition_publish',
