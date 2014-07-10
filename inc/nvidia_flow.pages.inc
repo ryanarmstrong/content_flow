@@ -25,7 +25,7 @@ function nvidia_flow_dashboard_page() {
   }
 
   // Build the 'My Latest Content' section.
-  $my_latest_content_block .= '<section id="my-latest-content" class="' . $width_class . '">';
+  $my_latest_content_block = '<section id="my-latest-content" class="' . $width_class . '">';
   $my_latest_content_block .= '<h2>My Latest Content</h2>';
   $form = drupal_get_form('my_latest_content');
   $my_latest_content_block .= drupal_render($form);
