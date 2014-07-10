@@ -79,6 +79,7 @@ function nvidia_flow_needs_review_page($form, $form_state) {
     'caller' => 'nvidia_flow_needs_review_page',
     'table_id' => 'content-table',
     'pager' => TRUE,
+    'content_view' => 'node',
   );
   $form = nvidia_flow_build_revisions_admin($variables);
 
@@ -103,6 +104,7 @@ function nvidia_flow_all_content_page($form, $form_state) {
     'caller' => 'nvidia_flow_all_content_page',
     'table_id' => 'content-table',
     'pager' => TRUE,
+    'content_view' => 'node',
   );
   $form = nvidia_flow_build_revisions_admin($variables);
 
@@ -129,6 +131,7 @@ function nvidia_flow_my_content_page($form, $form_state) {
     'caller' => 'nvidia_flow_my_content_page',
     'table_id' => 'content-table',
     'pager' => TRUE,
+    'content_view' => 'node',
   );
   $form = nvidia_flow_build_revisions_admin($variables);
 
@@ -152,6 +155,7 @@ function my_latest_content($form, $form_state) {
     'more' => 'admin/content/node/my-content',
     'caller' => 'my_latest_content_block',
     'table_id' => 'my-latest-content-block-table',
+    'content_view' => 'node',
   );
   $form = nvidia_flow_build_revisions_admin($variables);
 
@@ -175,6 +179,7 @@ function needs_review($form, $form_state) {
     'more' => 'admin/content/node/review',
     'caller' => 'needs_review_block',
     'table_id' => 'needs-review-block-table',
+    'content_view' => 'node',
   );
   $form = nvidia_flow_build_revisions_admin($variables);
 
