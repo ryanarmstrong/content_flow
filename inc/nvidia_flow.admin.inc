@@ -316,9 +316,8 @@ function nvidia_flow_admin_nodes($variables) {
         $node = node_load($row->nid, $row->nrs_vid);
         if ($row->state == 'published') {
           $states = state_flow_get_revisions($node->nid);
-          $latest_revision = 0;
           foreach ($states as $state) {
-            if ($state->status == 1 && $state->state != 'published' && $state->timestamp > $latest_revision) {
+            if ($state->status == 1 && $state->state != 'published') {
               $latest_revision_vid = $state->vid;
               if ($state->state == 'needs review') {
                 $status = array(
@@ -331,9 +330,7 @@ function nvidia_flow_admin_nodes($variables) {
                   'class' => 'hidden-xs',
                 );
               }
-
             }
-            $latest_revision = $state->timestamp;
           }
         }
       } else {
