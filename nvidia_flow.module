@@ -88,6 +88,10 @@ function nvidia_flow_menu_alter(&$items) {
 
   // Remove the content revisions page that State Flow adds.
   unset($items['admin/content/content-revisions']);
+  // Override the node edit menu item title.
+  $items['node/%node/edit']['title callback'] = 'nvidia_flow_edit_tab_title';
+  $items['node/%node/edit']['title arguments'] = array(1);
+
 }
 
 /**
@@ -216,3 +220,37 @@ function nvidia_flow_query_node_revision_alter(QueryAlterableInterface $query) {
     $query->condition('n.language', $filter);
   }
 }
+/**
+ * Change the name of the node edit tab, conditionally.
+ *
+ * @param $node
+ *   The node being acted upon.
+ *
+ * @return
+ *   The title for the tab.
+ */
+function nvidia_flow_edit_tab_title($node) {
+  if (nvidia_flow_node_working_draft($node)) {
+    return t('Edit draft');
+  }
+  return t('New draft');
+}
+
+/**
+ * Helper function to determin if there is a working draft of a node
+ *
+ * @param $node
+ *   The node being acted upon.
+ * @return
+ *   A node editing form.
+ */
+function nvidia_flow_node_working_draft($node) {
+  $states = state_flow_get_revisions($node->nid);
+  foreach ($states as $state) {
+    if ($state->status == '1' && ($state->state == 'draft' || $state->state == 'needs review')) {
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
