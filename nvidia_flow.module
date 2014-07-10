@@ -86,6 +86,19 @@ function nvidia_flow_menu_alter(&$items) {
     'type' => MENU_LOCAL_ACTION,
   );
 
+  // View the current draft of a node.
+  $items["node/%node/draft"] = array(
+    'title' => 'View draft',
+    'page callback' => 'nvidia_flow_node_view_draft',
+    'page arguments' => array(1),
+    'access callback' => 'nvidia_flow_access_current_draft',
+    'access arguments' => array(1),
+    'file path' => $module . '/inc/',
+    'file' => 'nvidia_flow.pages.inc',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => -9,
+  );
+
   // Remove the content revisions page that State Flow adds.
   unset($items['admin/content/content-revisions']);
   // Override the node/X/edit page to ensure that the right revision (most current) is displayed.
@@ -296,3 +309,22 @@ function nvidia_flow_node_latest_revision($node) {
   return $node;
 }
 
+/**
+ * Checks if the user can view the current node revision.
+ *
+ * This is the access callback for node/%node/draft as defined in
+ * workbench_moderation_menu().
+ *
+ * @param $node
+ *   The node being acted upon.
+ *
+ * @return
+ *   Booelan TRUE or FALSE.
+ */
+function nvidia_flow_access_current_draft($node) {
+  // Don't show if there is a working draft.
+  if (nvidia_flow_node_working_draft($node) && $node->status == '1') {
+    return TRUE;
+  }
+  return FALSE;
+}

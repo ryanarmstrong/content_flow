@@ -202,3 +202,26 @@ function nvidia_flow_node_edit_page_override($node) {
   module_load_include('inc', 'node', 'node.pages');
   return node_page_edit($node);
 }
+
+/**
+ * Displays the current draft the node, if it is not published.
+ *
+ * @param $node
+ *   The node being acted upon.
+ *
+ * @return
+ *   A fully themed node page.
+ */
+function nvidia_flow_node_view_draft($node) {
+  $node = nvidia_flow_node_latest_revision($node);
+  $router_item = menu_get_item('node/' . $node->nid);
+  if ($router_item['include_file']) {
+    require_once DRUPAL_ROOT . '/' . $router_item['include_file'];
+  }
+
+  // Call whatever function is assigned to the main node path but pass the
+  // current node as an argument. This approach allows for the reuse of of Panel
+  // definition acting on node/%node.
+  return $router_item['page_callback']($node);
+}
+
