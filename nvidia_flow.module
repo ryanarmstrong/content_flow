@@ -101,6 +101,21 @@ function nvidia_flow_menu_alter(&$items) {
 
   // Remove the content revisions page that State Flow adds.
   unset($items['admin/content/content-revisions']);
+
+  // Override the workflow page that State Flow provides.
+  $items['node/%node/workflow'] = array(
+    'title' => 'Workflow',
+    'description' => 'Information about the workflow status of this content',
+    'type' => MENU_LOCAL_TASK,
+    'page callback' => 'nvidia_flow_events',
+    'page arguments' => array(1),
+    'access callback' => 'state_flow_menu_node_access',
+    'access arguments' => array(1),
+    'weight' => 10,
+    'file path' => $module . '/inc/',
+    'file' => 'nvidia_flow.pages.inc',
+  );
+
   // Override the node/X/edit page to ensure that the right revision (most current) is displayed.
   $items['node/%node/edit']['page callback'] = 'nvidia_flow_node_edit_page_override';
   $items['node/%node/edit']['file path'] = $module . '/inc/';
