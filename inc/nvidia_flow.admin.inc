@@ -303,7 +303,7 @@ function nvidia_flow_admin_nodes($variables) {
     foreach ($rows as $row) {
       // Set the default presentation of the status column.
       $status = array(
-        'data' => '<span class="label label-default">' . $row->state . '</span>',
+        'data' => '<span class="label label-default " title="' . ucwords($row->state) . '" alt="' . ucwords($row->state) . '">' . strtoupper(substr($row->state, 0, 1)) . '</span>',
         'class' => 'hidden-xs',
       );
 
@@ -322,12 +322,12 @@ function nvidia_flow_admin_nodes($variables) {
               $latest_revision_vid = $state->vid;
               if ($state->state == 'needs review') {
                 $status = array(
-                  'data' => '<span class="label label-default">' . $row->state . '</span>' . '<br /><span class="label label-primary">Draft Needs Review</span>',
+                  'data' => '<span class="label label-default " title="' . ucwords($row->state) . '" alt="' . ucwords($row->state) . '">' . strtoupper(substr($row->state, 0, 1)) . '</span>' . ' <span class="label label-primary" title="Needs Review" alt="Needs Review">NR</span>',
                   'class' => 'hidden-xs',
                 );
               } else {
                 $status = array(
-                  'data' => '<span class="label label-default">' . $row->state . '</span>' . '<br /><span class="label label-info">Working Drafts</span>',
+                  'data' => '<span class="label label-default" title="' . ucwords($row->state) . '" alt="' . ucwords($row->state) . '">' . strtoupper(substr($row->state, 0, 1)) . '</span>' . ' <span class="label label-info" title="Working Draft" alt="Working Draft">WD</span>',
                   'class' => 'hidden-xs',
                 );
               }
