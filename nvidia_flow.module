@@ -241,6 +241,24 @@ function nvidia_flow_query_node_revision_alter(QueryAlterableInterface $query) {
     $query->condition('n.language', $filter);
   }
 }
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function nvidia_flow_form_node_form_alter(&$form, $form_state) {
+  // Uncheck the 'new revision' box if we are editing a revision that is in draft.
+  // This prevents a bunch of revisions being created that aren't needed.
+  $form['revision_information']['revision']['#attributes'] = array('style' => array('display:none'));
+  $form['revision_information']['revision']['#title'] = '';
+  $states = state_flow_get_revisions($form['nid']['#value']);
+  foreach ($states as $state) {
+    if ($state->vid == $form['vid']['#value'] && ($state->state == 'draft' || $state->state == 'needs review')) {
+      dpm($state);
+      $form['revision_information']['revision']['#default_value'] = FALSE;
+    }
+  }
+}
+
 /**
  * Change the name of the node edit tab, conditionally.
  *
