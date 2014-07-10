@@ -377,8 +377,8 @@ function nvidia_flow_admin_nodes($variables) {
           }
         }
         $operations['edit'] = array(
-          'href' => 'node/' . $row->nid . '/revisions/' . $latest_revision_vid . '/edit',
           'title' => t($edit_title),
+          'href' => 'node/' . $row->nid . '/edit',
           'query' => $destination,
         );
       }
