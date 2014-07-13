@@ -441,7 +441,7 @@ function nvidia_flow_admin_nodes($variables) {
       '#type' => 'link',
       '#title' => t('More'),
       '#href' => $variables['more'],
-      '#attributes' => array('class' => array('button btn btn-primary btn-xs'), 'type' => array('button')),
+      '#attributes' => array('class' => array('button btn btn-primary btn-xs more-button'), 'type' => array('button')),
     );
   }
 
