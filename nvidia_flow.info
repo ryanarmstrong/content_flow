@@ -4,6 +4,7 @@ version = 7.x-1.0
 core = 7.x
 package = State Machine
 
+dependencies[] = date
 dependencies[] = state_flow
 dependencies[] = state_flow_schedule
 
