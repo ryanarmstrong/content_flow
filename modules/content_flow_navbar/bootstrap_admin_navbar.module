@@ -1,0 +1,363 @@
+<?php
+
+/**
+ * @file
+ * Bootstrap Admin Navbar module file.
+ */
+
+/**
+ * Implements hook_init().
+ */
+function bootstrap_admin_navbar_init() {
+  global $theme_info;
+  if ($theme_info->name != 'bootstrap') {
+    if (!in_array('Bootstrap', $theme_info->base_themes)) {
+      $path = drupal_get_path('module', 'bootstrap_admin_navbar');
+      drupal_add_js($path . '/js/bootstrap.js');
+      drupal_add_css($path . '/css/bootstrap.css');
+      drupal_add_css($path . '/css/font-awesome.css');
+    }
+  }
+}
+
+/**
+ * Implements hook_permission().
+ */
+function bootstrap_admin_navbar_permission() {
+  return array(
+    'access admin navbar' => array(
+      'title' => t('Use the administration navbar'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_theme().
+ */
+function bootstrap_admin_navbar_theme($existing, $type, $theme, $path) {
+  $items['navbar'] = array(
+    'render element' => 'navbar',
+    'template' => 'navbar',
+    'path' => drupal_get_path('module', 'bootstrap_admin_navbar'),
+  );
+  $items['navbar_button_group'] = array(
+    'render element' => 'navbar_button_group',
+    'template' => 'navbar-button-group',
+    'path' => drupal_get_path('module', 'bootstrap_admin_navbar'),
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_page_build().
+ *
+ * Add admin navbar to the page_top region automatically.
+ */
+function bootstrap_admin_navbar_page_build(&$page) {
+  $page['page_top']['navbar'] = array(
+    '#pre_render' => array('navbar_pre_render'),
+    '#access' => user_access('access admin navbar'),
+  );
+}
+
+/**
+ * Prerender function for the navbar.
+ *
+ * Since building the navbar takes some time, it is done just prior to
+ * rendering to ensure that it is built only if it will be displayed.
+ */
+function navbar_pre_render($navbar) {
+  $navbar = array_merge($navbar, navbar_view());
+  return $navbar;
+}
+
+/**
+ * Implements hook_preprocess_html().
+ *
+ * Add some page classes, so global page theming can adjust to the navbar.
+ */
+function bootstrap_admin_navbar_preprocess_html(&$vars) {
+  if (isset($vars['page']['page_top']['navbar']) && user_access('access admin navbar')) {
+    $vars['classes_array'][] = 'navbar';
+  }
+}
+
+/**
+ * Implements template_preprocess_navbar().
+ *
+ * Adding the 'overlay-displace-top' class to the navbar pushes the overlay
+ * down, so it appears below the navbar.
+ */
+function bootstrap_admin_navbar_preprocess_navbar(&$variables) {
+  $variables['classes_array'][] = "overlay-displace-top";
+}
+
+/**
+ * Implements hook_system_info_alter().
+ *
+ * Indicate that the 'page_top' region (in which the navbar will be displayed)
+ * is an overlay supplemental region that should be refreshed whenever its
+ * content is updated.
+ *
+ * This information is provided for any module that might need to use it, not
+ * just the core Overlay module.
+ */
+function bootstrap_admin_navbar_system_info_alter(&$info, $file, $type) {
+  if ($type == 'theme') {
+    $info['overlay_supplemental_regions'][] = 'page_top';
+  }
+}
+
+/**
+ * Builds the admin menu as a structured array ready for drupal_render().
+ *
+ * @return
+ *   Array of links and settings relating to the admin menu.
+ */
+function navbar_view() {
+  global $user;
+  $module_path = drupal_get_path('module', 'bootstrap_admin_navbar');
+  $build = array(
+    '#theme' => 'navbar',
+    '#attached'=> array(
+      'js' => array(
+        $module_path . '/js/navbar.js',
+        array(
+          'data' => array('tableHeaderOffset' => 'Drupal.navbar.height'),
+          'type' => 'setting'
+        ),
+      ),
+      'css' => array(
+        $module_path . '/css/bootstrap-admin-navbar.css',
+      ),
+    ),
+  );
+
+  // Add logout & user account links or login link.
+  $items = array();
+  if ($user->uid) {
+    $items['account'] = array(
+      'title' => t('Hello <strong>@username</strong>', array('@username' => format_username($user))),
+      'href' => '/user',
+      'attributes' => array('title' => t('User account'), 'alt' => t('User account')),
+    );
+
+    // Build the content management section.
+    $content_menu = array();
+    if (_node_add_access()) {
+      $content_menu['content management header'] = array(
+        'title' => t('Manage Content'),
+        'type' => 'header'
+      );
+      $content_menu['content dashboard'] = array(
+        'title' => t('Content Dashboard'),
+        'href' => '/admin/content',
+        'attributes' => array('title' => t('Content Dashboard'), 'alt' => t('Content Dashboard')),
+      );
+      $content_menu['create content'] = array(
+        'title' => t('Create Content'),
+        'href' => '/node/add',
+        'attributes' => array('title' => t('Add Content'), 'alt' => t('Add Content')),
+      );
+    }
+    // Build the local tasks for content management.
+    $node = menu_get_object();
+    if (_is_node_page($node)) {
+      $local_tasks = menu_local_tasks();
+      $content_menu['divider'] = array(
+        'type' => 'divider',
+      );
+      $content_menu['local task header'] = array(
+        'title' => truncate_utf8($node->title, 30, TRUE, TRUE),
+        'type' => 'header'
+      );
+      foreach ($local_tasks['tabs']['output'] as $local_task) {
+        $content_menu[strtolower($local_task['#link']['title'])] = array(
+          'title' => t($local_task['#link']['title']),
+          'href' => '/' . $local_task['#link']['href'],
+          'attributes' => array('title' => t($local_task['#link']['title']), 'alt' => t($local_task['#link']['title'])),
+        );
+      }
+    }
+    if (count($content_menu > 0)) {
+      $items['navbar_content_menu'] = array(
+        'items' => $content_menu,
+        'type' => 'button dropdown',
+        'icon' => 'edit',
+        'container classes' => 'dropdown',
+      );
+    }
+    // Build Drupal Admin Menu
+    if (user_access('access administration pages')) {
+      // Retrieve the admin menu from the database.
+      $links = navbar_menu_navigation_links(navbar_get_menu_tree());
+      $items['navbar_admin_menu'] = array(
+        'items' => $links,
+        'type' => 'button dropdown',
+        'icon' => 'cog',
+        'container classes' => 'dropdown',
+      );
+    }
+    $items['logout'] = array(
+      'href' => 'user/logout',
+      'icon' => 'sign-out',
+      'attributes' => array('title' => t('Sign out'), 'alt' => t('Sign out'), 'class' => array('signout-button')),
+    );
+  }
+  else {
+    $items['account'] = array(
+      'href' => 'user',
+      'icon' => 'sign-in',
+      'attributes' => array('title' => t('Sign in'), 'alt' => t('Sign in'), 'class' => array('signin-button')),
+    );
+  }
+  $build['navbar_right'] = array(
+    '#theme' => 'navbar_button_group',
+    '#items' => $items,
+    '#attributes' => array('id' => 'navbar-user', 'class' => array('nav', 'navbar-nav', 'navbar-right')),
+  );
+  // Add a logo
+  $build['navbar_logo'] = l(theme_image(array('path' => theme_get_setting('logo'), 'height' => '34px')), '<front>', array('attributes' => array('id' => 'logo', 'class' => array('logo navbar-btn pull-left')), 'html' => TRUE));
+  // Add a "home" link.
+  $site_name = (theme_get_setting('toggle_name') ? filter_xss_admin(variable_get('site_name', 'Drupal')) : '');
+  $build['navbar_home'] = l($site_name, '<front>', array('attributes' => array('class' => array('navbar-brand'))));
+
+  return $build;
+}
+
+function bootstrap_admin_navbar_preprocess_navbar_button_group(&$variables) {
+  $items = array();
+  foreach ($variables['navbar_button_group']['#items'] as $key => $item) {
+    if (isset($item['type'])) {
+      $variables['items'][$key] = bootstrap_admin_navbar_format_dropdown($item);
+      continue;
+    }
+    $icon = isset($item['icon']) ? '<i class="fa fa-' . $item['icon'] . ' fa-lg fa-fw"></i> ' : NULL;
+    $title = isset($item['title']) ? $item['title']: NULL;
+    $variables['items'][$key]['content'] = '<a href="' . $item['href'] . '"' . drupal_attributes($item['attributes']) . '>' . $icon . $title . '</a>';
+  }
+}
+
+function bootstrap_admin_navbar_format_dropdown($element) {
+  $title = isset($element['title']) ? $element['title'] : NULL;
+  $icon = isset($element['icon']) ? '<i class="fa fa-' . $element['icon'] . ' fa-lg fa-fw"></i> ' : NULL;
+  $button_type = isset($element['button type']) ? $element['button type'] : 'btn-default';
+  $button_dropdown = array();
+  $button_dropdown['container classes'] = isset($element['container classes']) ? 'class="' . $element['container classes'] . '"' : NULL;
+  $button_dropdown['content'] = '<a href="#" class="dropdown-toggle" data-toggle="dropdown">' . $icon . $title . '</a>';
+  $button_dropdown['content'] .= '<ul class="dropdown-menu" role"menu">';
+  foreach ($element['items'] as $item) {
+    if (isset($item['type'])) {
+      if ($item['type'] == 'header') {
+        $button_dropdown['content'] .= '<li role="presentation" class="dropdown-header">' . $item['title'] . '</li>';
+        continue;
+      }
+      if ($item['type'] == 'divider') {
+        $button_dropdown['content'] .= '<li role="presentation" class="divider"></li>';
+        continue;
+      }
+    }
+    $button_dropdown['content'] .= '<li role="presentation"><a role="menuitem" tabindex="-1" href="' . $item['href'] . '">' . $item['title'] . '</a></li>';
+  }
+  $button_dropdown['content'] .= '</ul>';
+
+  return $button_dropdown;
+}
+
+/**
+ * Gets only the top level items below the 'admin' path.
+ *
+ * @return
+ *   An array containing a menu tree of top level items below the 'admin' path.
+ */
+function navbar_get_menu_tree() {
+  $tree = array();
+  $admin_link = db_query('SELECT * FROM {menu_links} WHERE menu_name = :menu_name AND module = :module AND link_path = :path', array(':menu_name' => 'management', ':module' => 'system', ':path' => 'admin'))->fetchAssoc();
+  if ($admin_link) {
+    $tree = menu_build_tree('management', array(
+      'expanded' => array($admin_link['mlid']),
+      'min_depth' => $admin_link['depth'] + 1,
+      'max_depth' => $admin_link['depth'] + 1,
+    ));
+  }
+
+  return $tree;
+}
+
+/**
+ * Generates a links array from a menu tree array.
+ *
+ * Based on menu_navigation_links(). Adds path based IDs and icon placeholders
+ * to the links.
+ *
+ * @return
+ *   An array of links as defined above.
+ */
+function navbar_menu_navigation_links($tree) {
+  $links = array();
+  $links['admin header'] = array(
+    'type' => 'header',
+    'title' => t('Administer Drupal'),
+  );
+  foreach ($tree as $item) {
+    if (!$item['link']['hidden'] && $item['link']['access'] && ($item['link']['link_path'] != 'admin/content')) {
+      // Make sure we have a path specific ID in place, so we can attach icons
+      // and behaviors to the items.
+      $id = str_replace(array('/', '<', '>'), array('-', '', ''), $item['link']['href']);
+
+      $link = $item['link']['localized_options'];
+      $link['href'] = '/' . $item['link']['href'];
+      // Add icon placeholder.
+      $link['title'] = '<span class="icon"></span>' . check_plain($item['link']['title']);
+      // Add admin link ID.
+      $link['attributes'] = array('id' => 'navbar-link-' . $id);
+      if (!empty($item['link']['description'])) {
+        $link['title'] .= ' <span class="element-invisible">(' . $item['link']['description'] . ')</span>';
+        $link['attributes']['title'] = $item['link']['description'];
+      }
+      $link['html'] = TRUE;
+
+      $class = ' path-' . $id;
+      if (navbar_in_active_trail($item['link']['href'])) {
+        $class .= ' active-trail';
+      }
+      $links['menu-' . $item['link']['mlid'] . $class] = $link;
+    }
+  }
+  return $links;
+}
+
+/**
+ * Checks whether an item is in the active trail.
+ *
+ * Useful when using a menu generated by menu_tree_all_data() which does
+ * not set the 'in_active_trail' flag on items.
+ *
+ * @return
+ *   TRUE when path is in the active trail, FALSE if not.
+ *
+ * @todo
+ *   Look at migrating to a menu system level function.
+ */
+function navbar_in_active_trail($path) {
+  $active_paths = &drupal_static(__FUNCTION__);
+
+  // Gather active paths.
+  if (!isset($active_paths)) {
+    $active_paths = array();
+    $trail = menu_get_active_trail();
+    foreach ($trail as $item) {
+      if (!empty($item['href'])) {
+        $active_paths[] = $item['href'];
+      }
+    }
+  }
+  return in_array($path, $active_paths);
+}
+
+function _is_node_page() {
+  if (menu_get_object()) {
+    return TRUE;
+  }
+  return FALSE;
+}

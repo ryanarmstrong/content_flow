@@ -1,0 +1,22 @@
+#bootstrap-admin-navbar {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.navbar #logo {
+  padding: 0 15px 0 0;
+}
+@media screen and (min-width: 768px) {
+  .navbar .logo {
+    margin-right: 0;
+    padding-left: 0;
+  }
+}
+
+#bootstrap-admin-navbar .navbar a.dropdown-toggle, #bootstrap-admin-navbar .navbar a.signout-button, #bootstrap-admin-navbar .navbar a.signin-button {
+  padding-right: 5px;
+  padding-left: 5px;
+}
+
+#bootstrap-admin-navbar .navbar-right {
+  padding-right: 15px;
+}
