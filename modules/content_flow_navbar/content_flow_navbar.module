@@ -11,7 +11,7 @@
 function content_flow_navbar_init() {
   global $theme_info;
   if ($theme_info->name != 'bootstrap') {
-    if (!in_array('Bootstrap', $theme_info->base_themes)) {
+    if (empty($theme_info->base_themes) || !in_array('Bootstrap', $theme_info->base_themes)) {
       $path = drupal_get_path('module', 'content_flow_navbar');
       drupal_add_js($path . '/js/bootstrap.js');
       drupal_add_css($path . '/css/bootstrap.css');
