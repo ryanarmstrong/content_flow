@@ -2,17 +2,17 @@
 
 /**
  * @file
- * Bootstrap Admin Navbar module file.
+ * Content Flow Navbar module file.
  */
 
 /**
  * Implements hook_init().
  */
-function bootstrap_admin_navbar_init() {
+function content_flow_navbar_init() {
   global $theme_info;
   if ($theme_info->name != 'bootstrap') {
     if (!in_array('Bootstrap', $theme_info->base_themes)) {
-      $path = drupal_get_path('module', 'bootstrap_admin_navbar');
+      $path = drupal_get_path('module', 'content_flow_navbar');
       drupal_add_js($path . '/js/bootstrap.js');
       drupal_add_css($path . '/css/bootstrap.css');
       drupal_add_css($path . '/css/font-awesome.css');
@@ -23,7 +23,7 @@ function bootstrap_admin_navbar_init() {
 /**
  * Implements hook_permission().
  */
-function bootstrap_admin_navbar_permission() {
+function content_flow_navbar_permission() {
   return array(
     'access admin navbar' => array(
       'title' => t('Use the administration navbar'),
@@ -34,16 +34,16 @@ function bootstrap_admin_navbar_permission() {
 /**
  * Implements hook_theme().
  */
-function bootstrap_admin_navbar_theme($existing, $type, $theme, $path) {
+function content_flow_navbar_theme($existing, $type, $theme, $path) {
   $items['navbar'] = array(
     'render element' => 'navbar',
     'template' => 'navbar',
-    'path' => drupal_get_path('module', 'bootstrap_admin_navbar'),
+    'path' => drupal_get_path('module', 'content_flow_navbar'),
   );
   $items['navbar_button_group'] = array(
     'render element' => 'navbar_button_group',
     'template' => 'navbar-button-group',
-    'path' => drupal_get_path('module', 'bootstrap_admin_navbar'),
+    'path' => drupal_get_path('module', 'content_flow_navbar'),
   );
   return $items;
 }
@@ -53,7 +53,7 @@ function bootstrap_admin_navbar_theme($existing, $type, $theme, $path) {
  *
  * Add admin navbar to the page_top region automatically.
  */
-function bootstrap_admin_navbar_page_build(&$page) {
+function content_flow_navbar_page_build(&$page) {
   $page['page_top']['navbar'] = array(
     '#pre_render' => array('navbar_pre_render'),
     '#access' => user_access('access admin navbar'),
@@ -76,7 +76,7 @@ function navbar_pre_render($navbar) {
  *
  * Add some page classes, so global page theming can adjust to the navbar.
  */
-function bootstrap_admin_navbar_preprocess_html(&$vars) {
+function content_flow_navbar_preprocess_html(&$vars) {
   if (isset($vars['page']['page_top']['navbar']) && user_access('access admin navbar')) {
     $vars['classes_array'][] = 'navbar';
   }
@@ -88,7 +88,7 @@ function bootstrap_admin_navbar_preprocess_html(&$vars) {
  * Adding the 'overlay-displace-top' class to the navbar pushes the overlay
  * down, so it appears below the navbar.
  */
-function bootstrap_admin_navbar_preprocess_navbar(&$variables) {
+function content_flow_navbar_preprocess_navbar(&$variables) {
   $variables['classes_array'][] = "overlay-displace-top";
 }
 
@@ -102,7 +102,7 @@ function bootstrap_admin_navbar_preprocess_navbar(&$variables) {
  * This information is provided for any module that might need to use it, not
  * just the core Overlay module.
  */
-function bootstrap_admin_navbar_system_info_alter(&$info, $file, $type) {
+function content_flow_navbar_system_info_alter(&$info, $file, $type) {
   if ($type == 'theme') {
     $info['overlay_supplemental_regions'][] = 'page_top';
   }
@@ -116,7 +116,7 @@ function bootstrap_admin_navbar_system_info_alter(&$info, $file, $type) {
  */
 function navbar_view() {
   global $user;
-  $module_path = drupal_get_path('module', 'bootstrap_admin_navbar');
+  $module_path = drupal_get_path('module', 'content_flow_navbar');
   $build = array(
     '#theme' => 'navbar',
     '#attached'=> array(
@@ -128,7 +128,7 @@ function navbar_view() {
         ),
       ),
       'css' => array(
-        $module_path . '/css/bootstrap-admin-navbar.css',
+        $module_path . '/css/content-flow-navbar.css',
       ),
     ),
   );
@@ -225,11 +225,11 @@ function navbar_view() {
   return $build;
 }
 
-function bootstrap_admin_navbar_preprocess_navbar_button_group(&$variables) {
+function content_flow_navbar_preprocess_navbar_button_group(&$variables) {
   $items = array();
   foreach ($variables['navbar_button_group']['#items'] as $key => $item) {
     if (isset($item['type'])) {
-      $variables['items'][$key] = bootstrap_admin_navbar_format_dropdown($item);
+      $variables['items'][$key] = content_flow_navbar_format_dropdown($item);
       continue;
     }
     $icon = isset($item['icon']) ? '<i class="fa fa-' . $item['icon'] . ' fa-lg fa-fw"></i> ' : NULL;
@@ -238,7 +238,7 @@ function bootstrap_admin_navbar_preprocess_navbar_button_group(&$variables) {
   }
 }
 
-function bootstrap_admin_navbar_format_dropdown($element) {
+function content_flow_navbar_format_dropdown($element) {
   $title = isset($element['title']) ? $element['title'] : NULL;
   $icon = isset($element['icon']) ? '<i class="fa fa-' . $element['icon'] . ' fa-lg fa-fw"></i> ' : NULL;
   $button_type = isset($element['button type']) ? $element['button type'] : 'btn-default';

@@ -2,18 +2,18 @@
 
 /**
  * @file
- * Admin functions for editing NVIDIA Flow revisions
+ * Admin functions for editing Content Flow revisions
  */
 
-function nvidia_flow_build_revisions_admin($variables) {
+function content_flow_build_revisions_admin($variables) {
   // Include filters if requested.
   if (isset($variables['filters'])) {
-    $form['filter'] = nvidia_flow_filter_form($variables);
-    $form['#submit'] = array('nvidia_flow_filter_form_submit');
+    $form['filter'] = content_flow_filter_form($variables);
+    $form['#submit'] = array('content_flow_filter_form_submit');
   }
 
   // Build the main form.
-  $form['admin'] = nvidia_flow_admin_nodes($variables);
+  $form['admin'] = content_flow_admin_nodes($variables);
 
   return $form;
 }
@@ -21,7 +21,7 @@ function nvidia_flow_build_revisions_admin($variables) {
 /**
  * List node administration filters that can be applied.
  */
-function nvidia_flow_revision_filters($variables) {
+function content_flow_revision_filters($variables) {
   $filters = array();
 
   // Build the 'Status' filter.
@@ -105,7 +105,7 @@ function nvidia_flow_revision_filters($variables) {
 /**
  * Return form for node administration filters.
  */
-function nvidia_flow_filter_form($variables) {
+function content_flow_filter_form($variables) {
   // Create a unqiue ID for this form.
   $form_id = $variables['caller'] . '_node_revision_filter';
   $form['form_id'] = array(
@@ -127,7 +127,7 @@ function nvidia_flow_filter_form($variables) {
   }
 
   $session = isset($_SESSION[$form_id]) ? $_SESSION[$form_id] : array();
-  $filters = nvidia_flow_revision_filters($variables);
+  $filters = content_flow_revision_filters($variables);
 
   $form['filters'] = array(
     '#type' => 'fieldset',
@@ -171,11 +171,11 @@ function nvidia_flow_filter_form($variables) {
 /**
  * Process result from node administration filter form.
  */
-function nvidia_flow_filter_form_submit($form, &$form_state) {
+function content_flow_filter_form_submit($form, &$form_state) {
   // Set ID.
   $form_id = $form_state['values']['form_id'];
 
-  $filters = nvidia_flow_revision_filters();
+  $filters = content_flow_revision_filters();
   switch ($form_state['values']['op']) {
     case t('Filter'):
     case t('Refine'):
@@ -200,7 +200,7 @@ function nvidia_flow_filter_form_submit($form, &$form_state) {
 /**
  * Form builder: Builds the node administration overview.
  */
-function nvidia_flow_admin_nodes($variables) {
+function content_flow_admin_nodes($variables) {
   // Set the ID.
   $form_id = $variables['caller'] . '_node_revision_filter';
 
@@ -218,7 +218,7 @@ function nvidia_flow_admin_nodes($variables) {
     );
     $options = array();
     $operations = module_invoke_all('node_revision_operations');
-    drupal_alter('nvidia_flow_node_revision_operations', $operations);
+    drupal_alter('content_flow_node_revision_operations', $operations);
     foreach ($operations as $operation => $array) {
       $options[$operation] = $array['label'];
     }
@@ -233,8 +233,8 @@ function nvidia_flow_admin_nodes($variables) {
     $form['options']['submit'] = array(
       '#type' => 'submit',
       '#value' => t('Update'),
-      '#validate' => array('nvidia_flow_admin_nodes_validate'),
-      '#submit' => array('nvidia_flow_admin_nodes_submit'),
+      '#validate' => array('content_flow_admin_nodes_validate'),
+      '#submit' => array('content_flow_admin_nodes_submit'),
     );
   }
 
@@ -454,7 +454,7 @@ function nvidia_flow_admin_nodes($variables) {
  * Check if any nodes have been selected to perform the chosen
  * 'Update option' on.
  */
-function nvidia_flow_admin_nodes_validate($form, &$form_state) {
+function content_flow_admin_nodes_validate($form, &$form_state) {
   // Error if there are no items to select.
   if (!is_array($form_state['values']['nodes']) || !count(array_filter($form_state['values']['nodes']))) {
     form_set_error('', t('No items selected.'));
@@ -466,14 +466,14 @@ function nvidia_flow_admin_nodes_validate($form, &$form_state) {
  *
  * Execute the chosen 'Update option' on the selected nodes.
  */
-function nvidia_flow_admin_nodes_submit($form, &$form_state) {
+function content_flow_admin_nodes_submit($form, &$form_state) {
   $operations = module_invoke_all('node_revision_operations');
-  drupal_alter('nvidia_flow_node_revision_operations', $operations);
+  drupal_alter('content_flow_node_revision_operations', $operations);
   $operation = $operations[$form_state['values']['operation']];
 
   // Filter out unchecked nodes.
   $keys = array_filter($form_state['values']['nodes']);
-  $keys = array_map('_nvidia_flow_split_keys', $keys);
+  $keys = array_map('_content_flow_split_keys', $keys);
 
   if ($function = $operation['callback']) {
     // Add in callback arguments if present.
@@ -497,7 +497,7 @@ function nvidia_flow_admin_nodes_submit($form, &$form_state) {
 /**
  * Helper function to to split the keys.
  */
-function _nvidia_flow_split_keys($key) {
+function _content_flow_split_keys($key) {
   list($nid, $vid) = explode(':::', $key);
   return array(
     'vid' => $vid,

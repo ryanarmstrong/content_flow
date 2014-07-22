@@ -1,8 +1,8 @@
-name = NVIDIA Flow
-description = Extends the State Flow implimentation of the State Machine for NVIDIA workflow.
+name = Content Flow
+description = Extends the State Flow implimentation of the State Machine for Content workflow.
 version = 7.x-1.0
 core = 7.x
-package = State Machine
+package = Content Flow
 
 dependencies[] = date
 dependencies[] = state_flow

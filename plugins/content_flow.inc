@@ -2,10 +2,10 @@
 
 /**
  * @file
- * State Flow implementation of the State Machine class
+ * Content Flow implementation of the State Flow class
  */
 
-class NvidiaFlow extends StateFlow {
+class ContentFlow extends StateFlow {
 	public function init() {
 		// Initialize states
     $this->create_state('draft', array(
@@ -44,7 +44,7 @@ class NvidiaFlow extends StateFlow {
       'label' => t('Publish'),
       'origin' => array('draft', 'needs review', 'scheduled', 'unpublished'),
       'target' => 'published',
-      'guard' => 'nvidia_flow_guard_publish',
+      'guard' => 'content_flow_guard_publish',
       'after_transition' => 'after_transition_publish',
     ));
     $this->create_event('schedule', array(
@@ -70,14 +70,14 @@ class NvidiaFlow extends StateFlow {
 
     if (is_array($this->events[$key])) {
       $options = $this->events[$key];
-      $this->events[$key] = new NvidiaFlow_Event($key, $this, $options);
+      $this->events[$key] = new ContentFlow_Event($key, $this, $options);
     }
 
     return $this->events[$key];
   }
 }
 
-class NvidiaFlow_Event extends StateFlow_Event {
+class ContentFlow_Event extends StateFlow_Event {
   /**
    * Allow the event to finish after the machine has changed state.
    */
@@ -97,15 +97,15 @@ class NvidiaFlow_Event extends StateFlow_Event {
  * Guard callbacks
  */
 
-function nvidia_flow_guard_publish($event, $permission) {
-  return nvidia_flow_guard_permission($event, 'approve and reject content');
+function content_flow_guard_publish($event, $permission) {
+  return content_flow_guard_permission($event, 'approve and reject content');
 }
 
 /**
  * Helper function for evaluating an access decision with either the global or
  * group-specific permission.
  */
-function nvidia_flow_guard_permission($event, $permission) {
+function content_flow_guard_permission($event, $permission) {
   // If the user has the global permission, then return TRUE
   if (user_access($permission)) {
     return TRUE;
@@ -120,21 +120,21 @@ function nvidia_flow_guard_permission($event, $permission) {
  */
 
 function after_transition_needs_work($object) {
-  nvidia_flow_activity_log($object, 'state_transition_needs_work');
+  content_flow_activity_log($object, 'state_transition_needs_work');
 }
 
 function after_transition_needs_review($object) {
-  nvidia_flow_activity_log($object, 'state_transition_needs_review');
+  content_flow_activity_log($object, 'state_transition_needs_review');
 }
 
 function after_transition_publish($object) {
-  nvidia_flow_activity_log($object, 'state_transition_published');
+  content_flow_activity_log($object, 'state_transition_published');
 }
 
 function after_transition_scheduled($object) {
-  nvidia_flow_activity_log($object, 'state_transition_scheduled');
+  content_flow_activity_log($object, 'state_transition_scheduled');
 }
 
 function after_transition_unpublished($object) {
-  nvidia_flow_activity_log($object, 'state_transition_unpublished');
+  content_flow_activity_log($object, 'state_transition_unpublished');
 }

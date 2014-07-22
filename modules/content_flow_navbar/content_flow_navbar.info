@@ -1,0 +1,7 @@
+name = Content Flow Navbar
+description = Provides an admin and content editing navbar based on the Bootstrap framework.
+version = 7.x-1.0
+core = 7.x
+package = Content Flow
+
+dependencies[] = jquery_update

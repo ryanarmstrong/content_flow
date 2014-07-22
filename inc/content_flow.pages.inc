@@ -2,15 +2,15 @@
 
 /**
  * @file
- * Page callbacks for NVIDIA Flow
+ * Page callbacks for Content Flow
  */
 
-require_once 'nvidia_flow.admin.inc';
+require_once 'content_flow.admin.inc';
 
 /**
  * Page callback; presents the node editing form.
  */
-function nvidia_flow_dashboard_page() {
+function content_flow_dashboard_page() {
   $width_class = 'col-md-12';
   $build = '<div class="row">';
 
@@ -52,7 +52,7 @@ function nvidia_flow_dashboard_page() {
     ),
     'date_format' => 'ago',
   );
-  $activities = nvidia_flow_get_activities($options);
+  $activities = content_flow_get_activities($options);
 
   $build .= '<div class="row">';
   $build .= '<section id="latest-activity" class="col-lg-12">';
@@ -71,7 +71,7 @@ function nvidia_flow_dashboard_page() {
 /**
  * Menu callback; presents the node editing form.
  */
-function nvidia_flow_needs_review_page($form, $form_state) {
+function content_flow_needs_review_page($form, $form_state) {
   global $user;
   $variables = array(
     'filters' => array(
@@ -85,12 +85,12 @@ function nvidia_flow_needs_review_page($form, $form_state) {
     'columns' => array(
       'status' => FALSE,
     ),
-    'caller' => 'nvidia_flow_needs_review_page',
+    'caller' => 'content_flow_needs_review_page',
     'table_id' => 'content-table',
     'pager' => TRUE,
     'content_view' => 'node',
   );
-  $form = nvidia_flow_build_revisions_admin($variables);
+  $form = content_flow_build_revisions_admin($variables);
 
   return $form;
 }
@@ -98,7 +98,7 @@ function nvidia_flow_needs_review_page($form, $form_state) {
 /**
  * Menu callback; presents all content on the site.
  */
-function nvidia_flow_all_content_page($form, $form_state) {
+function content_flow_all_content_page($form, $form_state) {
   global $user;
   $variables = array(
     'filters' => array(
@@ -110,12 +110,12 @@ function nvidia_flow_all_content_page($form, $form_state) {
     ),
     'update_options' => TRUE,
     'content_view' => 'node',
-    'caller' => 'nvidia_flow_all_content_page',
+    'caller' => 'content_flow_all_content_page',
     'table_id' => 'content-table',
     'pager' => TRUE,
     'content_view' => 'node',
   );
-  $form = nvidia_flow_build_revisions_admin($variables);
+  $form = content_flow_build_revisions_admin($variables);
 
   return $form;
 }
@@ -123,7 +123,7 @@ function nvidia_flow_all_content_page($form, $form_state) {
 /**
  * Menu callback; presents current users content on the site.
  */
-function nvidia_flow_my_content_page($form, $form_state) {
+function content_flow_my_content_page($form, $form_state) {
   global $user;
   $variables = array(
     'filters' => array(
@@ -137,12 +137,12 @@ function nvidia_flow_my_content_page($form, $form_state) {
     'columns' => array(
       'author' => FALSE,
     ),
-    'caller' => 'nvidia_flow_my_content_page',
+    'caller' => 'content_flow_my_content_page',
     'table_id' => 'content-table',
     'pager' => TRUE,
     'content_view' => 'node',
   );
-  $form = nvidia_flow_build_revisions_admin($variables);
+  $form = content_flow_build_revisions_admin($variables);
 
   return $form;
 }
@@ -166,7 +166,7 @@ function my_latest_content($form, $form_state) {
     'table_id' => 'my-latest-content-block-table',
     'content_view' => 'node',
   );
-  $form = nvidia_flow_build_revisions_admin($variables);
+  $form = content_flow_build_revisions_admin($variables);
 
   return $form;
 }
@@ -190,7 +190,7 @@ function needs_review($form, $form_state) {
     'table_id' => 'needs-review-block-table',
     'content_view' => 'node',
   );
-  $form = nvidia_flow_build_revisions_admin($variables);
+  $form = content_flow_build_revisions_admin($variables);
 
   return $form;
 }
@@ -198,7 +198,7 @@ function needs_review($form, $form_state) {
 /**
  * Page callback; redirects to the node create page.
  */
-function nvidia_flow_create_content() {
+function content_flow_create_content() {
   drupal_goto('node/add');
 }
 
@@ -210,8 +210,8 @@ function nvidia_flow_create_content() {
  * @return
  *   A node editing form.
  */
-function nvidia_flow_node_edit_page_override($node) {
-  $node = nvidia_flow_node_latest_revision($node);
+function content_flow_node_edit_page_override($node) {
+  $node = content_flow_node_latest_revision($node);
   // Ensure we have the editing code.
   module_load_include('inc', 'node', 'node.pages');
   return node_page_edit($node);
@@ -226,8 +226,8 @@ function nvidia_flow_node_edit_page_override($node) {
  * @return
  *   A fully themed node page.
  */
-function nvidia_flow_node_view_draft($node) {
-  $node = nvidia_flow_node_latest_revision($node);
+function content_flow_node_view_draft($node) {
+  $node = content_flow_node_latest_revision($node);
   $router_item = menu_get_item('node/' . $node->nid);
   if ($router_item['include_file']) {
     require_once DRUPAL_ROOT . '/' . $router_item['include_file'];
@@ -242,7 +242,7 @@ function nvidia_flow_node_view_draft($node) {
 /**
  * Page callback for a node's Workflow page.
  */
-function nvidia_flow_events($node) {
+function content_flow_events($node) {
   // Gather information on the current published revision
   $state_flow = state_flow_load_state_machine($node);
   $events = $state_flow->get_available_events();

@@ -2,13 +2,13 @@
 
 /**
  * @file
- * Contains code pertaining to the NVIDIA Flow Activity log
+ * Contains code pertaining to the Content Flow Activity log
  */
 
 /**
  * Log an activity to the database
  */
-function nvidia_flow_activity_log($object, $type, $variables = array()) {
+function content_flow_activity_log($object, $type, $variables = array()) {
   // Set variables if the activty relates to a node
   if ($type != 'new_user' || $type != 'updated_user_roles') {
     // Load some information for the node being acted upon
@@ -94,7 +94,7 @@ function nvidia_flow_activity_log($object, $type, $variables = array()) {
   }
 
   // Create the activity log
-  Database::getConnection('default', 'default')->insert('nvidia_flow_activity')
+  Database::getConnection('default', 'default')->insert('content_flow_activity')
     ->fields(array(
       'uid' => $object_uid,
       'oid' => $object_id,
@@ -120,8 +120,8 @@ function nvidia_flow_activity_log($object, $type, $variables = array()) {
  *     - sort: Sort it by ASC or DESC
  *   - date_format: 'ago' for time ago, otherwise give a string for date()
  */             
-function nvidia_flow_get_activities($options) {
-  $query = db_select('nvidia_flow_activity', 'a');
+function content_flow_get_activities($options) {
+  $query = db_select('content_flow_activity', 'a');
   $query->fields('a', array('aid', 'activity_type', 'message', 'variables', 'timestamp'));
 
   if (isset($options['range'])) {

@@ -2,26 +2,26 @@
 
 /**
  * @file
- * NVIDIA Flow implementation of the State Flow module
+ * Content Flow implementation of the State Flow module
  */
 
-require_once 'inc/nvidia_flow.activity.inc';
+require_once 'inc/content_flow.activity.inc';
 
 /**
  * Implements hook_menu_alter().
  */
-function nvidia_flow_menu_alter(&$items) {
+function content_flow_menu_alter(&$items) {
   unset($items['admin/content']);
   unset($items['admin/content/node']);
-  $module = drupal_get_path('module', 'nvidia_flow');
+  $module = drupal_get_path('module', 'content_flow');
   $items['admin/content'] = array(
     'title' => 'Content Dashboard',
     'description' => 'Find and manage content.',
-    'page callback' => 'nvidia_flow_dashboard_page',
+    'page callback' => 'content_flow_dashboard_page',
     'access arguments' => array('access content overview'),
     'weight' => -10,
     'file path' => $module . '/inc/',
-    'file' => 'nvidia_flow.pages.inc',
+    'file' => 'content_flow.pages.inc',
   );
   $items['admin/content/node'] = array(
     'title' => 'Content Dashboard',
@@ -32,10 +32,10 @@ function nvidia_flow_menu_alter(&$items) {
     'title' => 'All Content',
     'description' => 'Show all content on the site.',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('nvidia_flow_all_content_page'),
+    'page arguments' => array('content_flow_all_content_page'),
     'access arguments' => array('access content overview'),
     'file path' => $module . '/inc/',
-    'file' => 'nvidia_flow.pages.inc',
+    'file' => 'content_flow.pages.inc',
     'type' => MENU_LOCAL_TASK,
     'weight' => -3,
   );
@@ -43,10 +43,10 @@ function nvidia_flow_menu_alter(&$items) {
     'title' => 'Needs Review',
     'description' => 'Show content that is in the review state.',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('nvidia_flow_needs_review_page'),
+    'page arguments' => array('content_flow_needs_review_page'),
     'access arguments' => array('approve and reject content'),
     'file path' => $module . '/inc/',
-    'file' => 'nvidia_flow.pages.inc',
+    'file' => 'content_flow.pages.inc',
     'type' => MENU_LOCAL_TASK,
     'weight' => -4,
   );
@@ -54,47 +54,47 @@ function nvidia_flow_menu_alter(&$items) {
     'title' => 'My Content',
     'description' => 'Show all content that is authored by the current user.',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('nvidia_flow_my_content_page'),
+    'page arguments' => array('content_flow_my_content_page'),
     'access arguments' => array('access content overview'),
     'file path' => $module . '/inc/',
-    'file' => 'nvidia_flow.pages.inc',
+    'file' => 'content_flow.pages.inc',
     'type' => MENU_LOCAL_TASK,
     'weight' => -5,
   );
   $items['admin/content/node/my-content/add'] = array(
     'title' => 'Add content',
-    'page callback' => 'nvidia_flow_create_content',
+    'page callback' => 'content_flow_create_content',
     'access arguments' => 'access content overview',
     'file path' => $module . '/inc/',
-    'file' => 'nvidia_flow.pages.inc',
+    'file' => 'content_flow.pages.inc',
     'type' => MENU_LOCAL_ACTION,
   );
   $items['admin/content/node/all-content/add'] = array(
     'title' => 'Add content',
-    'page callback' => 'nvidia_flow_create_content',
+    'page callback' => 'content_flow_create_content',
     'access arguments' => 'access content overview',
     'file path' => $module . '/inc/',
-    'file' => 'nvidia_flow.pages.inc',
+    'file' => 'content_flow.pages.inc',
     'type' => MENU_LOCAL_ACTION,
   );
   $items['admin/content/node/review/add'] = array(
     'title' => 'Add content',
-    'page callback' => 'nvidia_flow_create_content',
+    'page callback' => 'content_flow_create_content',
     'access arguments' => 'access content overview',
     'file path' => $module . '/inc/',
-    'file' => 'nvidia_flow.pages.inc',
+    'file' => 'content_flow.pages.inc',
     'type' => MENU_LOCAL_ACTION,
   );
 
   // View the current draft of a node.
   $items["node/%node/draft"] = array(
     'title' => 'View draft',
-    'page callback' => 'nvidia_flow_node_view_draft',
+    'page callback' => 'content_flow_node_view_draft',
     'page arguments' => array(1),
-    'access callback' => 'nvidia_flow_access_current_draft',
+    'access callback' => 'content_flow_access_current_draft',
     'access arguments' => array(1),
     'file path' => $module . '/inc/',
-    'file' => 'nvidia_flow.pages.inc',
+    'file' => 'content_flow.pages.inc',
     'type' => MENU_LOCAL_TASK,
     'weight' => -9,
   );
@@ -107,33 +107,33 @@ function nvidia_flow_menu_alter(&$items) {
     'title' => 'Workflow',
     'description' => 'Information about the workflow status of this content',
     'type' => MENU_LOCAL_TASK,
-    'page callback' => 'nvidia_flow_events',
+    'page callback' => 'content_flow_events',
     'page arguments' => array(1),
     'access callback' => 'state_flow_menu_node_access',
     'access arguments' => array(1),
     'weight' => 10,
     'file path' => $module . '/inc/',
-    'file' => 'nvidia_flow.pages.inc',
+    'file' => 'content_flow.pages.inc',
   );
 
   // Override the node/X/edit page to ensure that the right revision (most current) is displayed.
-  $items['node/%node/edit']['page callback'] = 'nvidia_flow_node_edit_page_override';
+  $items['node/%node/edit']['page callback'] = 'content_flow_node_edit_page_override';
   $items['node/%node/edit']['file path'] = $module . '/inc/';
-  $items['node/%node/edit']['file'] = 'nvidia_flow.pages.inc';
+  $items['node/%node/edit']['file'] = 'content_flow.pages.inc';
 
   // Override the node edit menu item title.
-  $items['node/%node/edit']['title callback'] = 'nvidia_flow_edit_tab_title';
+  $items['node/%node/edit']['title callback'] = 'content_flow_edit_tab_title';
   $items['node/%node/edit']['title arguments'] = array(1);
 
   // Override the node view menu item title.
-  $items['node/%node/view']['title callback'] = 'nvidia_flow_view_tab_title';
+  $items['node/%node/view']['title callback'] = 'content_flow_view_tab_title';
   $items['node/%node/view']['title arguments'] = array(1);
 }
 
 /**
  * Implements hook_permission().
  */
-function nvidia_flow_permission() {
+function content_flow_permission() {
   return array(
     'approve and reject content' => array(
       'title' => t('Approve and reject content'),
@@ -145,7 +145,7 @@ function nvidia_flow_permission() {
 /**
  * Implements hook_ctools_plugin_type().
  */
-function nvidia_flow_ctools_plugin_type() {
+function content_flow_ctools_plugin_type() {
   $plugins = array(
     'plugins' => array(
       'cache' => TRUE,
@@ -161,14 +161,14 @@ function nvidia_flow_ctools_plugin_type() {
 /**
  * Implements hook_state_flow_plugins().
  */
-function nvidia_flow_state_flow_plugins() {
+function content_flow_state_flow_plugins() {
   $info = array();
-  $path = drupal_get_path('module', 'nvidia_flow') . '/plugins';
-  $info['nvidia_flow'] = array(
+  $path = drupal_get_path('module', 'content_flow') . '/plugins';
+  $info['content_flow'] = array(
     'handler' => array(
-      'class' => 'NvidiaFlow',
+      'class' => 'ContentFlow',
       'path' => $path,
-      'file' => 'nvidia_flow.inc',
+      'file' => 'content_flow.inc',
     ),
   );
   return $info;
@@ -177,40 +177,40 @@ function nvidia_flow_state_flow_plugins() {
 /**
  * Implements hook_state_flow_machine_type_alter().
  */
-function nvidia_flow_state_flow_machine_type_alter(&$machine_type, $node) {
-  $machine_type = 'nvidia_flow';
+function content_flow_state_flow_machine_type_alter(&$machine_type, $node) {
+  $machine_type = 'content_flow';
 }
 
 /**
  * Implements hook_node_insert().
  */
-function nvidia_flow_node_insert($node) {
-  nvidia_flow_activity_log($node, 'new_content');
+function content_flow_node_insert($node) {
+  content_flow_activity_log($node, 'new_content');
 }
 
 /**
  * Implements hook_node_update().
  */
-function nvidia_flow_node_update($node) {
-  nvidia_flow_activity_log($node, 'updated_content');
+function content_flow_node_update($node) {
+  content_flow_activity_log($node, 'updated_content');
 }
 
 /**
  * Implements hook_user_insert().
  */
-function nvidia_flow_user_insert($user) {
-  nvidia_flow_activity_log($user, 'new_user');
+function content_flow_user_insert($user) {
+  content_flow_activity_log($user, 'new_user');
 }
 
 /**
  * Implements hook_user_update().
  */
-function nvidia_flow_user_update(&$edit, $account, $category) {
+function content_flow_user_update(&$edit, $account, $category) {
   $old_user = user_load($account->uid);
   // Compare the roles to see what was removed.
   if ($removed_roles = array_diff_key($old_user->roles, $account->roles)) {
     foreach ($removed_roles as $key => $removed_role) {
-      nvidia_flow_activity_log($account, 'updated_user_roles', array('removed_role' => $removed_role));
+      content_flow_activity_log($account, 'updated_user_roles', array('removed_role' => $removed_role));
     }
   }
 
@@ -219,7 +219,7 @@ function nvidia_flow_user_update(&$edit, $account, $category) {
     foreach ($added_roles as $key => $added_role) {
       $added_role = user_role_load($added_role);
       $added_role_name = $added_role->name;
-      nvidia_flow_activity_log($account, 'updated_user_roles', array('added_role' => $added_role_name));
+      content_flow_activity_log($account, 'updated_user_roles', array('added_role' => $added_role_name));
     }
   }
 }
@@ -227,7 +227,7 @@ function nvidia_flow_user_update(&$edit, $account, $category) {
 /**
  * Implements hook_query_node_revision_alter().
  */
-function nvidia_flow_query_node_revision_alter(QueryAlterableInterface $query) {
+function content_flow_query_node_revision_alter(QueryAlterableInterface $query) {
   // Get the filter form the session.
   $filters = $query->getMetaData('filters');
 
@@ -260,7 +260,7 @@ function nvidia_flow_query_node_revision_alter(QueryAlterableInterface $query) {
 /**
  * Implements hook_form_FORM_ID_alter().
  */
-function nvidia_flow_form_node_form_alter(&$form, $form_state) {
+function content_flow_form_node_form_alter(&$form, $form_state) {
   // Uncheck the 'new revision' box if we are editing a revision that is in draft.
   // This prevents a bunch of revisions being created that aren't needed.
   $form['revision_information']['revision']['#attributes'] = array('style' => array('display:none'));
@@ -282,8 +282,8 @@ function nvidia_flow_form_node_form_alter(&$form, $form_state) {
  * @return
  *   The title for the tab.
  */
-function nvidia_flow_edit_tab_title($node) {
-  if (nvidia_flow_node_working_draft($node)) {
+function content_flow_edit_tab_title($node) {
+  if (content_flow_node_working_draft($node)) {
     return t('Edit draft');
   }
   return t('New draft');
@@ -298,7 +298,7 @@ function nvidia_flow_edit_tab_title($node) {
  * @return
  *   The title for the tab.
  */
-function nvidia_flow_view_tab_title($node) {
+function content_flow_view_tab_title($node) {
   if ($node->status == '1') {
     return t('View published');
   }
@@ -313,7 +313,7 @@ function nvidia_flow_view_tab_title($node) {
  * @return
  *   A node editing form.
  */
-function nvidia_flow_node_working_draft($node) {
+function content_flow_node_working_draft($node) {
   $states = state_flow_get_revisions($node->nid);
   foreach ($states as $state) {
     if ($state->status == '1' && ($state->state == 'draft' || $state->state == 'needs review')) {
@@ -331,7 +331,7 @@ function nvidia_flow_node_working_draft($node) {
  * @return
  *   A node editing form.
  */
-function nvidia_flow_node_latest_revision($node) {
+function content_flow_node_latest_revision($node) {
   $states = state_flow_get_revisions($node->nid);
   foreach ($states as $state) {
     if (($state->state == 'draft' || $state->state == 'needs review') && $state->status == '1') {
@@ -353,9 +353,9 @@ function nvidia_flow_node_latest_revision($node) {
  * @return
  *   Booelan TRUE or FALSE.
  */
-function nvidia_flow_access_current_draft($node) {
+function content_flow_access_current_draft($node) {
   // Don't show if there is a working draft.
-  if (nvidia_flow_node_working_draft($node) && $node->status == '1') {
+  if (content_flow_node_working_draft($node) && $node->status == '1') {
     return TRUE;
   }
   return FALSE;

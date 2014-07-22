@@ -1,5 +1,0 @@
-name = Bootstrap Admin Navbar
-description = An admin navbar based on the Bootstrap framework.
-version = 7.x-1.0
-core = 7.x
-package = Administration

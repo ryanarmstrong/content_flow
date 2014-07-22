@@ -2,31 +2,31 @@
 
 /**
  * @file
- * Page callbacks for NVIDIA Flow
+ * Page callbacks for Content Flow
  */
 
 /**
  * Impliments hook_enable().
  */
-function nvidia_flow_install() {
+function content_flow_install() {
   // Create a writer role for content creators
-  $writer_role = new stdClass();
-  $writer_role->name = 'writer';
-  $writer_role->weight = 2;
-  user_role_save($writer_role);
+  $role = new stdClass();
+  $role->name = 'writer';
+  $role->weight = 2;
+  user_role_save($role);
 
   // Create a editor role for content editors
-  $editor_role = new stdClass();
-  $editor_role->name = 'editor';
-  $editor_role->weight = 3;
-  user_role_save($editor_role);
+  $role = new stdClass();
+  $role->name = 'editor';
+  $role->weight = 3;
+  user_role_save($role);
 }
 
 /**
  * Implements hook_menu().
  */
-function nvidia_flow_schema() {
-  $schema['nvidia_flow_activity'] = array(
+function content_flow_schema() {
+  $schema['content_flow_activity'] = array(
     'description' => 'Stores an activty log of the site\'s content.',
     'fields' => array(
       'aid' => array(
