@@ -8,26 +8,10 @@
 require_once 'inc/content_flow.activity.inc';
 
 /**
- * Implements hook_menu_alter().
+ * Implements hook_menu().
  */
-function content_flow_menu_alter(&$items) {
-  unset($items['admin/content']);
-  unset($items['admin/content/node']);
+function content_flow_menu() {
   $module = drupal_get_path('module', 'content_flow');
-  $items['admin/content'] = array(
-    'title' => 'Content Dashboard',
-    'description' => 'Find and manage content.',
-    'page callback' => 'content_flow_dashboard_page',
-    'access arguments' => array('access content overview'),
-    'weight' => -10,
-    'file path' => $module . '/inc/',
-    'file' => 'content_flow.pages.inc',
-  );
-  $items['admin/content/node'] = array(
-    'title' => 'Content Dashboard',
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-    'weight' => -10,
-  );
   $items['admin/content/node/all-content'] = array(
     'title' => 'All Content',
     'description' => 'Show all content on the site.',
@@ -64,7 +48,7 @@ function content_flow_menu_alter(&$items) {
   $items['admin/content/node/my-content/add'] = array(
     'title' => 'Add content',
     'page callback' => 'content_flow_create_content',
-    'access arguments' => 'access content overview',
+    'access arguments' => array('access content overview'),
     'file path' => $module . '/inc/',
     'file' => 'content_flow.pages.inc',
     'type' => MENU_LOCAL_ACTION,
@@ -72,7 +56,7 @@ function content_flow_menu_alter(&$items) {
   $items['admin/content/node/all-content/add'] = array(
     'title' => 'Add content',
     'page callback' => 'content_flow_create_content',
-    'access arguments' => 'access content overview',
+    'access arguments' => array('access content overview'),
     'file path' => $module . '/inc/',
     'file' => 'content_flow.pages.inc',
     'type' => MENU_LOCAL_ACTION,
@@ -80,7 +64,7 @@ function content_flow_menu_alter(&$items) {
   $items['admin/content/node/review/add'] = array(
     'title' => 'Add content',
     'page callback' => 'content_flow_create_content',
-    'access arguments' => 'access content overview',
+    'access arguments' => array('access content overview'),
     'file path' => $module . '/inc/',
     'file' => 'content_flow.pages.inc',
     'type' => MENU_LOCAL_ACTION,
@@ -97,6 +81,31 @@ function content_flow_menu_alter(&$items) {
     'file' => 'content_flow.pages.inc',
     'type' => MENU_LOCAL_TASK,
     'weight' => -9,
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_menu_alter().
+ */
+function content_flow_menu_alter(&$items) {
+  unset($items['admin/content']);
+  unset($items['admin/content/node']);
+  $module = drupal_get_path('module', 'content_flow');
+  $items['admin/content'] = array(
+    'title' => 'Content Dashboard',
+    'description' => 'Find and manage content.',
+    'page callback' => 'content_flow_dashboard_page',
+    'access arguments' => array('access content overview'),
+    'weight' => -10,
+    'file path' => $module . '/inc/',
+    'file' => 'content_flow.pages.inc',
+  );
+  $items['admin/content/node'] = array(
+    'title' => 'Content Dashboard',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10,
   );
 
   // Remove the content revisions page that State Flow adds.
