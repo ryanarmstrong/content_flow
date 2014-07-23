@@ -27,14 +27,9 @@
   <div class="navbar navbar-inverse navbar-fixed-top overlay-displace-top" role="navigation">
     <div class="container-fluid">
       <div class="navbar-header">
-
         <?php print render($navbar['navbar_logo']); ?>
-        <?php print render($navbar['navbar_home']); ?>
-
       </div>
-
       <?php print render($navbar['navbar_right']); ?>
-
     </div>
   </div>
 </div>

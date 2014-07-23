@@ -262,9 +262,6 @@ function navbar_view() {
   );
   // Add a logo
   $build['navbar_logo'] = l(theme_image(array('path' => theme_get_setting('logo'), 'height' => '34px')), '<front>', array('attributes' => array('id' => 'logo', 'class' => array('logo navbar-btn pull-left')), 'html' => TRUE));
-  // Add a "home" link.
-  $site_name = (theme_get_setting('toggle_name') ? filter_xss_admin(variable_get('site_name', 'Drupal')) : '');
-  $build['navbar_home'] = l($site_name, '<front>', array('attributes' => array('class' => array('navbar-brand'))));
 
   return $build;
 }
