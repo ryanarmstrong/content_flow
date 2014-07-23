@@ -27,19 +27,14 @@
   <div class="navbar navbar-inverse navbar-fixed-top overlay-displace-top" role="navigation">
     <div class="container-fluid">
       <div class="navbar-header">
-        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-          <span class="sr-only">Toggle navigation</span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-        </button>
+
         <?php print render($navbar['navbar_logo']); ?>
         <?php print render($navbar['navbar_home']); ?>
+
       </div>
-      <div class="collapse navbar-collapse">
-        <?php print render($navbar['navbar_main']); ?>
-        <?php print render($navbar['navbar_right']); ?>
-      </div><!--/.nav-collapse -->
+
+      <?php print render($navbar['navbar_right']); ?>
+
     </div>
   </div>
 </div>

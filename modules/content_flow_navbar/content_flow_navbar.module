@@ -136,10 +136,23 @@ function navbar_view() {
   // Add logout & user account links or login link.
   $items = array();
   if ($user->uid) {
-    $items['account'] = array(
+    $items['account mini'] = array(
+      'icon' => 'user',
+      'href' => '/user',
+      'attributes' => array(
+        'title' => t('User account'), 
+        'alt' => t('User account'), 
+        'class' => array('visible-xs', 'button-icon'),
+      ),
+    );
+    $items['account full'] = array(
       'title' => t('Hello <strong>@username</strong>', array('@username' => format_username($user))),
       'href' => '/user',
-      'attributes' => array('title' => t('User account'), 'alt' => t('User account')),
+      'attributes' => array(
+        'title' => t('User account'), 
+        'alt' => t('User account'), 
+        'class' => array('hidden-xs', 'button-icon'),
+      ),
     );
 
     // Build the content management section.
@@ -152,12 +165,18 @@ function navbar_view() {
       $content_menu['content dashboard'] = array(
         'title' => t('Content Dashboard'),
         'href' => '/admin/content',
-        'attributes' => array('title' => t('Content Dashboard'), 'alt' => t('Content Dashboard')),
+        'attributes' => array(
+          'title' => t('Content Dashboard'), 
+          'alt' => t('Content Dashboard'),
+        ),
       );
       $content_menu['create content'] = array(
         'title' => t('Create Content'),
         'href' => '/node/add',
-        'attributes' => array('title' => t('Add Content'), 'alt' => t('Add Content')),
+        'attributes' => array(
+          'title' => t('Add Content'), 
+          'alt' => t('Add Content'),
+        ),
       );
     }
     // Build the local tasks for content management.
@@ -175,7 +194,11 @@ function navbar_view() {
         $content_menu[strtolower($local_task['#link']['title'])] = array(
           'title' => t($local_task['#link']['title']),
           'href' => '/' . $local_task['#link']['href'],
-          'attributes' => array('title' => t($local_task['#link']['title']), 'alt' => t($local_task['#link']['title'])),
+          'attributes' => array(
+            'title' => t('Administer Drupal'), 
+            'alt' => t('Administer Drupal'), 
+            'class' => array('button-icon'),
+          ),
         );
       }
     }
@@ -185,6 +208,11 @@ function navbar_view() {
         'type' => 'button dropdown',
         'icon' => 'edit',
         'container classes' => 'dropdown',
+        'attributes' => array(
+          'title' => t('Manage Content'), 
+          'alt' => t('Manage Content'),
+          'class' => array('button-icon'),
+        ),
       );
     }
     // Build Drupal Admin Menu
@@ -196,25 +224,41 @@ function navbar_view() {
         'type' => 'button dropdown',
         'icon' => 'cog',
         'container classes' => 'dropdown',
+        'attributes' => array(
+          'title' => t('Administer Drupal'), 
+          'alt' => t('Administer Drupal'), 
+          'class' => array('button-icon'),
+        ),
       );
     }
     $items['logout'] = array(
       'href' => 'user/logout',
       'icon' => 'sign-out',
-      'attributes' => array('title' => t('Sign out'), 'alt' => t('Sign out'), 'class' => array('signout-button')),
+      'attributes' => array(
+        'title' => t('Sign out'), 
+        'alt' => t('Sign out'), 
+        'class' => array('signout-button', 'button-icon'),
+      ),
     );
   }
   else {
     $items['account'] = array(
       'href' => 'user',
       'icon' => 'sign-in',
-      'attributes' => array('title' => t('Sign in'), 'alt' => t('Sign in'), 'class' => array('signin-button')),
+      'attributes' => array(
+        'title' => t('Sign in'), 
+        'alt' => t('Sign in'), 
+        'class' => array('signin-button'),
+      ),
     );
   }
   $build['navbar_right'] = array(
     '#theme' => 'navbar_button_group',
     '#items' => $items,
-    '#attributes' => array('id' => 'navbar-user', 'class' => array('nav', 'navbar-nav', 'navbar-right')),
+    '#attributes' => array(
+      'id' => 'navbar-user', 
+      'class' => array('nav', 'navbar-nav', 'navbar-right'),
+    ),
   );
   // Add a logo
   $build['navbar_logo'] = l(theme_image(array('path' => theme_get_setting('logo'), 'height' => '34px')), '<front>', array('attributes' => array('id' => 'logo', 'class' => array('logo navbar-btn pull-left')), 'html' => TRUE));
@@ -244,7 +288,8 @@ function content_flow_navbar_format_dropdown($element) {
   $button_type = isset($element['button type']) ? $element['button type'] : 'btn-default';
   $button_dropdown = array();
   $button_dropdown['container classes'] = isset($element['container classes']) ? 'class="' . $element['container classes'] . '"' : NULL;
-  $button_dropdown['content'] = '<a href="#" class="dropdown-toggle" data-toggle="dropdown">' . $icon . $title . '</a>';
+  $element['attributes']['classes'][] = 'dropdown-toggle';
+  $button_dropdown['content'] = '<a href="#" data-toggle="dropdown"' . drupal_attributes($element['attributes']) . '>' . $icon . $title . '</a>';
   $button_dropdown['content'] .= '<ul class="dropdown-menu" role"menu">';
   foreach ($element['items'] as $item) {
     if (isset($item['type'])) {
@@ -257,7 +302,7 @@ function content_flow_navbar_format_dropdown($element) {
         continue;
       }
     }
-    $button_dropdown['content'] .= '<li role="presentation"><a role="menuitem" tabindex="-1" href="' . $item['href'] . '">' . $item['title'] . '</a></li>';
+    $button_dropdown['content'] .= '<li role="presentation"><a role="menuitem" tabindex="-1" href="' . $item['href'] . '"' . drupal_attributes($item['attributes']) . '>' . $item['title'] . '</a></li>';
   }
   $button_dropdown['content'] .= '</ul>';
 

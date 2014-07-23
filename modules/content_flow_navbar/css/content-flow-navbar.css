@@ -12,11 +12,27 @@
   }
 }
 
-#bootstrap-admin-navbar .navbar a.dropdown-toggle, #bootstrap-admin-navbar .navbar a.signout-button, #bootstrap-admin-navbar .navbar a.signin-button {
-  padding-right: 5px;
-  padding-left: 5px;
+.button-icon {
+  padding-right: 8px !important;
+  padding-left: 8px !important;
 }
 
-#bootstrap-admin-navbar .navbar-right {
-  padding-right: 15px;
+/* Removed responsive container from navbar
+ * to make it behave like an app toolbar. */
+.navbar-header {
+  float: left;
+}
+.navbar-right {
+  float: right;
+  padding: 0;
+}
+.navbar-nav {
+  margin: 0 !important;
+}
+.navbar-nav > li > a {
+  padding-top: 15px !important;
+  padding-bottom: 15px !important;
+}
+.nav li {
+  float: left;
 }
