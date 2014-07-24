@@ -13,17 +13,19 @@ function content_flow_install() {
   $role = new stdClass();
   $role->name = 'writer';
   $role->weight = 2;
-  if (!user_role_load_by_name($role->name)) {
-    user_role_save($role);
+  if (user_role_load_by_name($role->name)) {
+    user_role_delete($role->name);
   }
+  user_role_save($role);
 
   // Create a editor role for content editors
   $role = new stdClass();
   $role->name = 'editor';
   $role->weight = 3;
-  if (!user_role_load_by_name($role->name)) {
-    user_role_save($role);
+  if (user_role_load_by_name($role->name)) {
+    user_role_delete($role->name);
   }
+  user_role_save($role);
 }
 
 /**
