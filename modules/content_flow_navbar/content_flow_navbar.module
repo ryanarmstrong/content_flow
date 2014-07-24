@@ -195,9 +195,8 @@ function navbar_view() {
           'title' => t($local_task['#link']['title']),
           'href' => '/' . $local_task['#link']['href'],
           'attributes' => array(
-            'title' => t('Administer Drupal'), 
-            'alt' => t('Administer Drupal'), 
-            'class' => array('button-icon'),
+            'title' => t($local_task['#link']['title']),
+            'alt' => t($local_task['#link']['title']),
           ),
         );
       }
