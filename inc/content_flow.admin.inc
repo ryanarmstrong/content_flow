@@ -264,21 +264,14 @@ function content_flow_admin_nodes($variables) {
     $query->limit(50);
   }
 
-  // Toggle whether to view this from a node or revision perspective.
-  if (!empty($variables['content_view']) && $variables['content_view'] == 'node') {
-    $query->leftJoin('node_revision_states', 'nrs', 'n.vid = nrs.vid');
-    $query->leftJoin('users', 'u', 'n.uid = u.uid');
-  } else {
-    $query->leftJoin('node_revision_states', 'nrs', 'n.nid = nrs.nid');
-    $query->leftJoin('node_revision', 'nr', 'nrs.vid = nr.vid');
-    $query->leftJoin('users', 'u', 'nr.uid = u.uid');
-  }
+  $query->leftJoin('node_revision_states', 'nrs', 'n.nid = nrs.nid');
+  $query->leftJoin('users', 'u', 'n.uid = u.uid');
 
   $filters = isset($_SESSION[$form_id]) ? $_SESSION[$form_id] : array();
   $query
-    ->fields('n', array('nid', 'title', 'type', 'changed', 'uid', 'vid'))
+    ->fields('n', array('nid', 'title', 'type', 'uid', 'vid', 'created', 'changed'))
     ->fields('u', array('name'))
-    ->fields('nrs', array('vid', 'state'))
+    ->fields('nrs', array('vid', 'state', 'timestamp', 'status'))
     ->orderByHeader($header)
     ->addTag('node_revision')
     ->addMetaData('filters', $filters);
@@ -293,148 +286,125 @@ function content_flow_admin_nodes($variables) {
     $query->orderBy($variables['orderby']['field'], $variables['orderby']['sort']);
   }
 
-  $rows = $query->execute();
+  $results = $query->execute();
 
+  // Build the node array.
+  $nodes = content_flow_generate_node_array($results);
+
+  // Build the options.
   $options = array();
-  if ($rows) {
+  foreach ($nodes as $nid => $node) {
     // Prepare the list of nodes.
     $destination = drupal_get_destination();
 
-    foreach ($rows as $row) {
-      // Set the default presentation of the status column.
-      $status = array(
-        'data' => '<span class="label label-default " title="' . ucwords($row->state) . '" alt="' . ucwords($row->state) . '">' . strtoupper(substr($row->state, 0, 1)) . '</span>',
+    // Prepare status lables
+    $statuses = content_flow_generate_status_label($node['current_revision']['state']);
+    foreach ($node['other_revisions'] as $revision) {
+      if ($revision['state'] != 'unpublished' && $revision['status'] == 1) {
+        $statuses .= ' ' . content_flow_generate_status_label($revision['state'], 'info');
+      }
+    }
+
+    $options[$nid] = array(
+      'title' => array(
+        'data' => l($node['title'], 'node/' . $nid),
+      ),
+      'type' => array(
+        'data' => check_plain(node_type_get_name($node['type'])),
         'class' => 'hidden-xs',
+      ),
+      'changed' => t('!time ago', array('!time' => format_interval((time() - $node['updated']), 2))),
+      'author' => array(
+        'data' => array(
+          '#type' => 'link',
+          '#title' => $node['author'],
+          '#href' => 'user/' . $node['author'],
+        ),
+        'class' => 'hidden-xs',
+      ),
+      'status' => array(
+        'data' => $statuses,
+        'class' => 'hidden-xs',
+      ),
+    );
+
+    // Conditionally remove unneeded columns.
+    if (isset($variables['columns'])) {
+      foreach ($variables['columns'] as $column => $enabled) {
+        if ($enabled === FALSE) {
+          unset($options[$nid][$column]);
+        }
+      }
+    }
+
+    // Build a list of all the accessible operations for the current node.
+    $operations = array();
+    if (node_access('update', $node)) {
+      $edit_title = ($node['working_draft']) ? 'Edit Draft' : 'New Draft';
+      $operations['edit'] = array(
+        'title' => t($edit_title),
+        'href' => 'node/' . $nid . '/edit',
+        'query' => $destination,
       );
-
-      // Set the default vid of the row.
-      $latest_revision_vid = $row->nrs_vid;
-
-      // Generate key based on whether we are viewing a node or revision.
-      if (!empty($variables['content_view']) && $variables['content_view'] == 'node') {
-        $key = $row->nid;
-        $node = node_load($row->nid, $row->nrs_vid);
-        if ($row->state == 'published') {
-          $states = state_flow_get_revisions($node->nid);
-          foreach ($states as $state) {
-            if ($state->status == 1 && $state->state != 'published') {
-              $latest_revision_vid = $state->vid;
-              if ($state->state == 'needs review') {
-                $status = array(
-                  'data' => '<span class="label label-default " title="' . ucwords($row->state) . '" alt="' . ucwords($row->state) . '">' . strtoupper(substr($row->state, 0, 1)) . '</span>' . ' <span class="label label-primary" title="Needs Review" alt="Needs Review">NR</span>',
-                  'class' => 'hidden-xs',
-                );
-              } else {
-                $status = array(
-                  'data' => '<span class="label label-default" title="' . ucwords($row->state) . '" alt="' . ucwords($row->state) . '">' . strtoupper(substr($row->state, 0, 1)) . '</span>' . ' <span class="label label-info" title="Working Draft" alt="Working Draft">WD</span>',
-                  'class' => 'hidden-xs',
-                );
-              }
-            }
-          }
-        }
-      } else {
-        $key = $row->nid . $row->nrs_vid;
-      }
-
-      $options[$key] = array(
-        'title' => array(
-          'data' => l($row->title, 'node/' . $row->nid),
-        ),
-        'type' => array(
-          'data' => check_plain(node_type_get_name($row->type)),
-          'class' => 'hidden-xs',
-        ),
-        'changed' => t('!time ago', array('!time' => format_interval((time() - $row->changed), 2))),
-        'author' => array(
-          'data' => array(
-            '#type' => 'link',
-            '#title' => $row->name,
-            '#href' => 'user/' . $row->name,
-          ),
-          'class' => 'hidden-xs',
-        ),
-        'status' => $status,
+    }
+    if (user_access('manage content workflow')) {
+      $operations['workflow'] = array(
+        'title' => t('workflow'),
+        'href' => 'node/' . $nid . '/workflow',
+        'query' => $destination,
       );
+    }
+    if (user_access('administer nodes')) {
+      $operations['delete'] = array(
+        'title' => t('delete'),
+        'href' => 'node/' . $nid . '/delete',
+        'query' => $destination,
+      );
+    }
 
-      // Conditionally remove unneeded columns.
-      if (isset($variables['columns'])) {
-        foreach ($variables['columns'] as $column => $status) {
-          if ($status === FALSE) {
-            unset($options[$key][$column]);
-          }
-        }
-      }
-
-      // Build a list of all the accessible operations for the current node.
-      $operations = array();
-      if (node_access('update', $node)) {
-        $edit_title = 'new draft';
-        $states = state_flow_get_revisions($row->nid);
-        foreach ($states as $state) {
-          if ($state->vid == $latest_revision_vid && ($state->state == 'draft' || $state->state == 'needs review')) {
-            $edit_title = 'edit draft';
-          }
-        }
-        $operations['edit'] = array(
-          'title' => t($edit_title),
-          'href' => 'node/' . $row->nid . '/edit',
-          'query' => $destination,
-        );
-      }
-      if (user_access('manage content workflow')) {
-        $operations['workflow'] = array(
-          'title' => t('workflow'),
-          'href' => 'node/' . $row->nid . '/workflow',
-          'query' => $destination,
-        );
-      }
-      if (user_access('administer nodes')) {
-        $operations['delete'] = array(
-          'title' => t('delete'),
-          'href' => 'node/' . $row->nid . '/delete',
-          'query' => $destination,
-        );
-      }
-
-      $options[$key]['operations'] = array();
-      if (count($operations) > 1) {
-        // Render an unordered list of operations links.
-        $options[$key]['operations'] = array(
-          'data' => array(
-            '#theme' => 'bootstrap_btn_dropdown',
-            '#links' => $operations,
-            '#split' => TRUE,
-            '#type' => 'default',
-            '#size' => 'sm',
-            '#attributes' => array('class' => array('links', 'inline')),
-          ),
-        );
-      }
-      elseif (!empty($operations)) {
-        // Render the first and only operation as a link.
-        $link = reset($operations);
-        $options[$key]['operations'] = array(
-          'data' => array(
-            '#type' => 'link',
-            '#title' => $link['title'],
-            '#href' => $link['href'],
-            '#options' => array('query' => $link['query']),
-          ),
-        );
-      }
+    $options[$nid]['operations'] = array();
+    if (count($operations) > 1) {
+      // Render an unordered list of operations links.
+      $options[$nid]['operations'] = array(
+        'data' => array(
+          '#theme' => 'bootstrap_btn_dropdown',
+          '#links' => $operations,
+          '#split' => TRUE,
+          '#type' => 'default',
+          '#size' => 'sm',
+          '#attributes' => array('class' => array('links', 'inline')),
+        ),
+      );
+    }
+    elseif (!empty($operations)) {
+      // Render the first and only operation as a link.
+      $link = reset($operations);
+      $options[$nid]['operations'] = array(
+        'data' => array(
+          '#type' => 'link',
+          '#title' => $link['title'],
+          '#href' => $link['href'],
+          '#options' => array('query' => $link['query']),
+        ),
+      );
     }
   }
 
   $form['nodes'] = array(
-    '#type' => 'tableselect',
+    '#type' => 'markup',
+    '#theme' => 'table',
     '#header' => $header,
-    '#options' => $options,
+    '#rows' => $options,
     '#empty' => t('No content available.'),
     '#attributes' => array('id' => $variables['table_id']),
   );
-
   $form['pager'] = array('#markup' => theme('pager'));
+  if ($variables['type'] == 'tableselect') {
+    $form['nodes']['#type'] = 'tableselect';
+    $form['nodes']['#options'] = $options;
+    unset($form['nodes']['#rows']);
+    unset($form['nodes']['#theme']);
+  }
 
   if (!empty($variables['more'])) {
     $form['more'] = array(
@@ -492,6 +462,55 @@ function content_flow_admin_nodes_submit($form, &$form_state) {
     // show the confirmation form for the deletion of nodes.
     $form_state['rebuild'] = TRUE;
   }
+}
+
+/**
+ * Generates an array of nodes with needed information for the Content Flow
+ * views using an executed Query object.
+ */
+function content_flow_generate_node_array($results) {
+  $nodes = array();
+  foreach ($results as $result) {
+    $nodes[$result->nid]['title'] = $result->title;
+    $nodes[$result->nid]['type'] = $result->type;
+    $nodes[$result->nid]['author'] = $result->name;
+    $nodes[$result->nid]['created'] = $result->created;
+
+    // Set the latest updated date.
+    if ($result->timestamp > $nodes[$result->nid]['updated']) {
+      $nodes[$result->nid]['updated'] = $result->timestamp;
+    }
+
+    // Current revision.
+    if ($result->vid == $result->nrs_vid) {
+      $nodes[$result->nid]['current_revision'] = array(
+        'vid' => $result->vid,
+        'state' => $result->state,
+        'updated' => $result->timestamp,
+        'status' => $result->status,
+      );
+    }
+    // Working Drafts.
+    if ($result->vid != $result->nrs_vid) {
+      $nodes[$result->nid]['other_revisions'][] = array(
+        'vid' => $result->vid,
+        'state' => $result->state,
+        'updated' => $result->timestamp,
+        'status' => $result->status,
+      );
+      if ($result->state == 'draft' || $result->state == 'needs review' && $result->status == 1) {
+        $nodes[$result->nid]['working_draft'] = TRUE;
+      }
+    }
+  }
+  return $nodes;
+}
+
+/**
+ * Generates a status label.
+ */
+function content_flow_generate_status_label($status_name, $variation = 'default') {
+  return '<span class="label label-' . $variation . '" title="' . $status_name . '" alt="' . $status_name . '">' . strtoupper(substr($status_name, 0, 1)) . '</span>';
 }
 
 /**
