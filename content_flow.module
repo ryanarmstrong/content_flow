@@ -274,6 +274,8 @@ function content_flow_form_node_form_alter(&$form, $form_state) {
   // This prevents a bunch of revisions being created that aren't needed.
   $form['revision_information']['revision']['#attributes'] = array('style' => array('display:none'));
   $form['revision_information']['revision']['#title'] = '';
+  $form['options']['status']['#attributes'] = array('style' => array('display:none'));
+  $form['options']['status']['#title'] = '';
   $states = state_flow_get_revisions($form['nid']['#value']);
   foreach ($states as $state) {
     if ($state->vid == $form['vid']['#value'] && ($state->state == 'draft' || $state->state == 'needs review')) {
