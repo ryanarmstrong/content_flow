@@ -340,7 +340,10 @@ function content_flow_admin_nodes($variables) {
     // Build a list of all the accessible operations for the current node.
     $operations = array();
     if (node_access('update', $node)) {
-      $edit_title = ($node['working_draft']) ? 'Edit Draft' : 'New Draft';
+      $edit_title = 'New Draft';
+      if ($node['working_draft'] || $node['current_revision']['state'] == 'draft' || $node['current_revision']['state'] == 'needs review') {
+        $edit_title = 'Edit Draft';
+      }
       $operations['edit'] = array(
         'title' => t($edit_title),
         'href' => 'node/' . $nid . '/edit',
