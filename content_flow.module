@@ -285,6 +285,20 @@ function content_flow_form_node_form_alter(&$form, $form_state) {
 }
 
 /**
+ * Implements hook_url_outbound_alter().
+ */
+function content_flow_url_outbound_alter(&$path, &$options, $original_path) {
+  // Instead of pointing to node/[nid]/revisions/[vid]/view, point to node/[nid]/draft.
+  if (preg_match('|^node/([0-9]*)/revisions/([0-9]*)/view(/.*)?|', $path, $matches)) {
+    $path = 'node/' . $matches[1] . '/draft';
+  }
+  // Instead of pointing to node/[nid]/revisions/[vid]/edit, point to node/[nid]/edit.
+  if (preg_match('|^node/([0-9]*)/revisions/([0-9]*)/edit(/.*)?|', $path, $matches)) {
+    $path = 'node/' . $matches[1] . '/edit';
+  }
+}
+
+/**
  * Change the name of the node edit tab, conditionally.
  *
  * @param $node
