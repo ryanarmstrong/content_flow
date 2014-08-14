@@ -127,8 +127,6 @@ function content_flow_menu_alter(&$items) {
 
   // Override the node/X/edit page to ensure that the right revision (most current) is displayed.
   $items['node/%node/edit']['page callback'] = 'content_flow_node_edit_page_override';
-  $items['node/%node/edit']['file path'] = $module . '/inc/';
-  $items['node/%node/edit']['file'] = 'content_flow.pages.inc';
 
   // Override the node edit menu item title.
   $items['node/%node/edit']['title callback'] = 'content_flow_edit_tab_title';
@@ -137,6 +135,24 @@ function content_flow_menu_alter(&$items) {
   // Override the node view menu item title.
   $items['node/%node/view']['title callback'] = 'content_flow_view_tab_title';
   $items['node/%node/view']['title arguments'] = array(1);
+}
+
+/**
+ * Overrides the node/%/edit page to ensure the proper revision is shown.
+ *
+ * @param $node
+ *   The node being acted upon.
+ * @return
+ *   A node editing form.
+ */
+function content_flow_node_edit_page_override($node) {
+  // Check to see if this is an existing node
+  if (isset($node->nid)) {
+    $node = content_flow_node_latest_revision($node);
+  }
+  // Ensure we have the editing code.
+  module_load_include('inc', 'node', 'node.pages');
+  return node_page_edit($node);
 }
 
 /**

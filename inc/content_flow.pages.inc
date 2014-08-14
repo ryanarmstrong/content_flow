@@ -201,21 +201,6 @@ function content_flow_create_content() {
 }
 
 /**
- * Overrides the node/%/edit page to ensure the proper revision is shown.
- *
- * @param $node
- *   The node being acted upon.
- * @return
- *   A node editing form.
- */
-function content_flow_node_edit_page_override($node) {
-  $node = content_flow_node_latest_revision($node);
-  // Ensure we have the editing code.
-  module_load_include('inc', 'node', 'node.pages');
-  return node_page_edit($node);
-}
-
-/**
  * Displays the current draft the node, if it is not published.
  *
  * @param $node
