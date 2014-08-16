@@ -526,3 +526,30 @@ function _content_flow_split_keys($key) {
     'nid' => $nid,
   );
 }
+
+function content_flow_admin_settings($form, $form_state) {
+  $form['content_flow_placeholder'] = array(
+    '#type' => 'markup',
+    '#markup' => '<p>Placeholder for Content Flow settings.</p>',
+  );
+
+  return system_settings_form($form);
+}
+
+function content_flow_admin_update_content($form, $form_state) {
+  drupal_set_message(t('IMPORTANT: Updating content will DROP all data from the tables \'node_revision_states\' and \'node_revision_states_history\'.'), 'warning');
+  $form['note'] = array(
+    '#type' => 'markup',
+    '#markup' => '<p>Update content to have Content Flow states and history. Do this if you have installed Content Flow on a site with existing content.</p>',
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Update Content'),
+  );
+
+  return $form;
+}
+
+function content_flow_admin_update_content_submit($form, $form_state) {
+  content_flow_update_content(TRUE);
+}

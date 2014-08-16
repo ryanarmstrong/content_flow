@@ -83,6 +83,32 @@ function content_flow_menu() {
     'weight' => -9,
   );
 
+  // Content Flow Settings Pages
+  $items['admin/config/content/content-flow'] = array(
+    'title' => 'Content Flow',
+    'description' => 'Content Flow settings.',
+    'file path' => $module . '/inc/',
+    'file' => 'content_flow.admin.inc',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('content_flow_admin_settings'),
+    'access arguments' => array('administer site configuration'),
+  );
+  $items['admin/config/content/content-flow/settings'] = array(
+    'title' => 'Content Flow Settings',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10,
+  );
+  $items['admin/config/content/content-flow/update-content'] = array(
+    'title' => 'Update Content',
+    'description' => 'Update existing content for Content Flow.',
+    'file path' => $module . '/inc/',
+    'file' => 'content_flow.admin.inc',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('content_flow_admin_update_content'),
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_LOCAL_TASK,
+  );
+
   return $items;
 }
 
@@ -400,4 +426,145 @@ function content_flow_access_current_draft($node) {
     return TRUE;
   }
   return FALSE;
+}
+
+function content_flow_update_content($batch_mode = FALSE) {
+  // Truncate the Content Flow tables if they exist
+  $trucate_tables = array(
+    'node_revision_states',
+    'node_revision_states_history',
+  );
+  foreach ($trucate_tables as $table) {
+    if (db_table_exists($table)) {
+      $result = db_truncate($table)->execute();
+    }
+  }
+
+  if ($batch_mode) {
+    $batch = array(
+      'title' => t('Updating existing content for Content Flow'),
+      'operations' => array(
+        array('_content_flow_update_content_batch_operation', array()),
+      ),
+      'finished' => '_content_flow_update_content_batch_finished'
+    );
+    batch_set($batch);
+  }
+  else {
+    // Create records for existing node revisions in in NVIDIA Flow module.
+    $revisions = db_query("SELECT {node_revision}.vid, {node_revision}.nid, {node_revision}.uid, {node_revision}.timestamp, {node}.vid AS active_revision, {node}.status FROM {node_revision} INNER JOIN {node} ON {node_revision}.nid = {node}.nid WHERE {node_revision}.vid > :vid ORDER BY {node_revision}.vid ASC", array(':vid' => $current_vid));
+    foreach ($revisions as $revision) {
+      // Create the Content Flow entries for this revision.
+      _content_flow_create_revision_entries($revision);
+    }
+  }
+  return TRUE;
+}
+
+/**
+ * Performs batch operation for content_flow_update_content().
+ *
+ * This is a multistep operation: we go through all revisions by packs of 20. The
+ * batch processing engine interrupts processing and sends progress feedback
+ * after 1 second execution time.
+ *
+ * @param array $context
+ *   An array of contextual key/value information for rebuild batch process.
+ */
+function _content_flow_update_content_batch_operation(&$context) {
+  if (empty($context['sandbox'])) {
+    // Initiate multistep processing.
+    $context['sandbox']['progress'] = 0;
+    $context['sandbox']['current_revision'] = 0;
+    $context['sandbox']['max'] = db_query('SELECT COUNT(DISTINCT vid) FROM {node_revision}')->fetchField();
+  }
+
+  // Process the next 20 revisions.
+  $limit = 20;
+  // Create records for existing node revisions in in NVIDIA Flow module.
+  $revisions = db_query_range("SELECT {node_revision}.vid, {node_revision}.nid, {node_revision}.uid, {node_revision}.timestamp, {node}.vid AS active_revision, {node}.status FROM {node_revision} INNER JOIN {node} ON {node_revision}.nid = {node}.nid WHERE {node_revision}.vid > :vid ORDER BY {node_revision}.vid ASC", 0, $limit, array(':vid' => $context['sandbox']['current_revision']));
+  foreach ($revisions as $revision) {
+    // Create the Content Flow entries for this revision.
+    _content_flow_create_revision_entries($revision);
+
+    $context['sandbox']['progress']++;
+    $context['sandbox']['current_revision'] = $revision->vid;
+  }
+
+  // Multistep processing : report progress.
+  if ($context['sandbox']['progress'] != $context['sandbox']['max']) {
+    $context['finished'] = $context['sandbox']['progress'] / $context['sandbox']['max'];
+  }
+}
+
+/**
+ * Performs post-processing for node_access_rebuild().
+ *
+ * @param bool $success
+ *   A boolean indicating whether the re-build process has completed.
+ * @param array $results
+ *   An array of results information.
+ * @param array $operations
+ *   An array of function calls (not used in this function).
+ */
+function _content_flow_update_content_batch_finished($success, $results, $operations) {
+  if ($success) {
+    drupal_set_message(t('The content has been updated for Content Flow.'));
+  }
+  else {
+    drupal_set_message(t('The content update for Content Flow failed. It is recommended that you attemtp to run this update again.'), 'error');
+  }
+  cache_clear_all();
+}
+
+/**
+ * Helper function for content_flow_update_content().
+ *
+ * @param bool $success
+ *   A boolean indicating whether the re-build process has completed.
+ * @param array $results
+ *   An array of results information.
+ * @param array $operations
+ *   An array of function calls (not used in this function).
+ */
+function _content_flow_create_revision_entries($revision) {
+  $state = 'unpublished';
+  $status = 0;
+  $node_revisions_log = 'System Update: This is an retired revision.';
+
+  // Check to see if the revision is the currently active one.
+  if ($revision->vid == $revision->active_revision) {
+    // This is the latest revision in the node table.
+    $status = 1;
+    $node_revisions_log = 'System Update: This is the current, but unpublished revision.';
+    // Now check to see if the node is published.
+    if ($revision->status == 1) {
+      // This revision is published.
+      $state = 'published';
+      $node_revisions_log = 'System Update: This is the current, and published revision.';
+    }
+  }
+
+  // Create node_revision_states record for this revision.
+  $node_revision_states = db_insert('node_revision_states')
+  ->fields(array(
+    'vid' => $revision->vid,
+    'nid' => $revision->nid,
+    'state' => $state,
+    'status' => $status,
+    'timestamp' => $revision->timestamp,
+  ))
+  ->execute();
+
+  // Create node_revision_states_history for this revision.
+  $node_revision_states_history = db_insert('node_revision_states_history')
+  ->fields(array(
+    'vid' => $revision->vid,
+    'nid' => $revision->nid,
+    'state' => $state,
+    'timestamp' => $revision->timestamp,
+    'uid' => $revision->nid,
+    'log' => $node_revisions_log,
+  ))
+  ->execute();
 }
