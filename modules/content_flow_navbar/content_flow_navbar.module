@@ -231,7 +231,7 @@ function navbar_view() {
       );
     }
     $items['logout'] = array(
-      'href' => 'user/logout',
+      'href' => '/user/logout',
       'icon' => 'sign-out',
       'attributes' => array(
         'title' => t('Sign out'), 
