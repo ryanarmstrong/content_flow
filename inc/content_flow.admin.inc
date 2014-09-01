@@ -243,7 +243,7 @@ function content_flow_admin_nodes($variables) {
     'title' => array('data' => t('Title'), 'field' => 'n.title'),
     'type' => array('data' => t('Type'), 'field' => 'n.type', 'class' => 'hidden-xs'),
     'changed' => array('data' => t('Updated'), 'field' => 'nrs.timestamp', 'sort' => 'desc'),
-    'author' => array('data' => t('Author'), 'class' => 'hidden-xs'),
+    'author' => array('data' => t('Author'), 'field' => 'u.name', 'class' => 'hidden-xs'),
     'status' => array('data' => t('Status'), 'class' => 'hidden-xs'),
   );
 
@@ -258,20 +258,21 @@ function content_flow_admin_nodes($variables) {
 
   $header['operations'] = array('data' => t('Operations'));
 
-  $query = db_select('node', 'n')->extend('TableSort');
+  $query = db_select('node_revision_states', 'nrs')->extend('TableSort');
   if (!empty($variables['pager'])) {
-    $query = db_select('node', 'n')->extend('PagerDefault')->extend('TableSort');
+    $query = db_select('node_revision_states', 'nrs')->extend('PagerDefault')->extend('TableSort');
     $query->limit(50);
   }
 
-  $query->leftJoin('node_revision_states', 'nrs', 'n.nid = nrs.nid');
+  $query->leftJoin('node', 'n', 'n.nid = nrs.nid');
   $query->leftJoin('users', 'u', 'n.uid = u.uid');
 
   $filters = isset($_SESSION[$form_id]) ? $_SESSION[$form_id] : array();
   $query
-    ->fields('n', array('nid', 'title', 'type', 'uid', 'vid', 'created', 'changed'))
+    ->fields('nrs', array('nid', 'vid', 'state', 'timestamp', 'status'))
+    ->fields('n', array('title', 'type', 'uid', 'status', 'vid'))
     ->fields('u', array('name'))
-    ->fields('nrs', array('vid', 'state', 'timestamp', 'status'))
+    ->groupBy('nrs.nid')
     ->orderByHeader($header)
     ->addTag('node_revision')
     ->addMetaData('filters', $filters);
@@ -298,10 +299,10 @@ function content_flow_admin_nodes($variables) {
     $destination = drupal_get_destination();
 
     // Prepare status lables
-    $statuses = content_flow_generate_status_label($node['current_revision']['state']);
+    $statuses = content_flow_generate_status_label($node['node_current_revision']['state']);
     if (!empty($node['other_revisions'])) {
       foreach ($node['other_revisions'] as $revision) {
-        if ($revision['state'] != 'unpublished' && $revision['status'] == 1) {
+        if ($revision['status'] == 1) {
           $statuses .= ' ' . content_flow_generate_status_label($revision['state'], 'info');
         }
       }
@@ -346,7 +347,7 @@ function content_flow_admin_nodes($variables) {
     $operations = array();
     if (node_access('update', node_load($nid))) {
       $edit_title = 'New Draft';
-      if (!empty($node['working_draft']) || $node['current_revision']['state'] == 'draft' || $node['current_revision']['state'] == 'needs review') {
+      if ($node['working_draft']) {
         $edit_title = 'Edit Draft';
       }
       $operations['edit'] = array(
@@ -482,34 +483,31 @@ function content_flow_generate_node_array($results) {
     $nodes[$result->nid]['title'] = $result->title;
     $nodes[$result->nid]['type'] = $result->type;
     $nodes[$result->nid]['author'] = $result->name;
-    $nodes[$result->nid]['created'] = $result->created;
-
-    // Set the latest updated date.
-    if (empty($nodes[$result->nid]['updated'])) {
-      $nodes[$result->nid]['updated'] = $result->timestamp;
-    }
-    if ($result->timestamp > $nodes[$result->nid]['updated']) {
-      $nodes[$result->nid]['updated'] = $result->timestamp;
-    }
-
-    // Current revision.
-    if ($result->vid == $result->nrs_vid) {
-      $nodes[$result->nid]['current_revision'] = array(
-        'vid' => $result->vid,
-        'state' => $result->state,
-        'updated' => $result->timestamp,
-        'status' => $result->status,
-      );
-    }
-    // Working Drafts.
-    if ($result->vid != $result->nrs_vid) {
-      $nodes[$result->nid]['other_revisions'][] = array(
-        'vid' => $result->vid,
-        'state' => $result->state,
-        'updated' => $result->timestamp,
-        'status' => $result->status,
-      );
-      if ($result->state == 'draft' || $result->state == 'needs review' && $result->status == 1) {
+    $nodes[$result->nid]['updated'] = $result->timestamp;
+    $nodes[$result->nid]['working_draft'] = FALSE;
+    // Set revision information.
+    $revisions = state_flow_get_revisions($result->nid);
+    foreach ($revisions as $revision) {
+      switch ($revision->vid) {
+        case $result->n_vid:
+          $nodes[$result->nid]['node_current_revision'] = array(
+            'vid' => $revision->vid,
+            'state' => $revision->state,
+            'updated' => $revision->timestamp,
+            'status' => $revision->status,
+          );
+          break;
+        
+        default:
+          $nodes[$result->nid]['other_revisions'][] = array(
+            'vid' => $revision->vid,
+            'state' => $revision->state,
+            'updated' => $revision->timestamp,
+            'status' => $revision->status,
+          );
+          break;
+      }
+      if (($revision->state == 'draft' || $revision->state == 'needs review') && $revision->status) {
         $nodes[$result->nid]['working_draft'] = TRUE;
       }
     }
