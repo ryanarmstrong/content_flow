@@ -201,28 +201,6 @@ function content_flow_create_content() {
 }
 
 /**
- * Displays the current draft the node, if it is not published.
- *
- * @param $node
- *   The node being acted upon.
- *
- * @return
- *   A fully themed node page.
- */
-function content_flow_node_view_draft($node) {
-  $node = content_flow_node_latest_revision($node);
-  $router_item = menu_get_item('node/' . $node->nid);
-  if ($router_item['include_file']) {
-    require_once DRUPAL_ROOT . '/' . $router_item['include_file'];
-  }
-
-  // Call whatever function is assigned to the main node path but pass the
-  // current node as an argument. This approach allows for the reuse of of Panel
-  // definition acting on node/%node.
-  return $router_item['page_callback']($node);
-}
-
-/**
  * Page callback for a node's Workflow page.
  */
 function content_flow_events($node) {

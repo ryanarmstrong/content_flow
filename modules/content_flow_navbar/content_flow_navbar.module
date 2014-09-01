@@ -158,10 +158,10 @@ function navbar_view() {
     // Build the content management section.
     $content_menu = array();
     if (_node_add_access()) {
-      $content_menu['content management header'] = array(
-        'title' => t('Manage Content'),
-        'type' => 'header'
-      );
+      // $content_menu['content management header'] = array(
+      //   'title' => t('Manage Content'),
+      //   'type' => 'header'
+      // );
       $content_menu['content dashboard'] = array(
         'title' => t('Content Dashboard'),
         'href' => '/admin/content',
@@ -181,13 +181,72 @@ function navbar_view() {
     }
     // Build the local tasks for content management.
     $node = menu_get_object();
-    if (_is_node_page($node)) {
+    if ($node) {
+      $active_revisions = _content_flow_get_active_revisions($node->nid);
+      $context = _content_flow_node_context();
+      $content_menu['viewing mode divider'] = array(
+        'type' => 'divider',
+      );
+      $content_menu['viewing mode header'] = array(
+        'title' => t('Viewing Published'),
+        'type' => 'header'
+      );
+      if ($context == 'view') {
+        // Build View Mode section
+        $view_mode = _content_flow_get_current_view_mode($node);
+        $view_mode_switch = ($view_mode == 'published') ? 'draft' : 'published';
+        $view_mode_href = str_replace('//node', '/node', url('node/' . $node->nid, array('query' => array('view_mode' => $view_mode_switch))));
+        $content_menu['viewing mode divider'] = array(
+          'type' => 'divider',
+        );
+        $content_menu['viewing mode header'] = array(
+          'title' => t('Viewing ' . $view_mode),
+          'type' => 'header'
+        );
+        if (content_flow_node_working_draft($node) && $node->status == 1) {
+          $content_menu['switch view mode'] = array(
+            'title' => t('Switch to ' . $view_mode_switch),
+            'href' => $view_mode_href,
+            'attributes' => array(
+              'title' => t('Switch to ' . $view_mode_switch),
+              'alt' => t('Switch to ' . $view_mode_switch),
+            ),
+          );
+        }
+      }
+      if ($context == 'edit' || $context == 'workflow') {
+        $content_menu['viewing mode header']['title'] = t('View Content');
+        foreach ($active_revisions as $revision) {
+          if ($revision->state == 'published') {
+            $content_menu['view published'] = array(
+              'title' => t('View Published'),
+              'href' => url('node/' . $node->nid),
+              'attributes' => array(
+                'title' => t('View Published'), 
+                'alt' => t('View Published'),
+              ),
+            );
+            break;
+          }
+          if ($revision->state == 'draft') {
+            $content_menu['view draft'] = array(
+              'title' => t('View Draft'),
+              'href' => url('node/' . $node->nid, array('query' => array('view_mode' => 'draft'))),
+              'attributes' => array(
+                'title' => t('View Draft'), 
+                'alt' => t('View Draft'),
+              ),
+            );
+          }
+        }
+      }
+      // Build Local Tasks section.
       $local_tasks = menu_local_tasks();
-      $content_menu['divider'] = array(
+      $content_menu['local tasks divider'] = array(
         'type' => 'divider',
       );
       $content_menu['local task header'] = array(
-        'title' => truncate_utf8($node->title, 30, TRUE, TRUE),
+        'title' => t('Manage Content'),
         'type' => 'header'
       );
       foreach ($local_tasks['tabs']['output'] as $local_task) {
@@ -394,11 +453,4 @@ function navbar_in_active_trail($path) {
     }
   }
   return in_array($path, $active_paths);
-}
-
-function _is_node_page() {
-  if (menu_get_object()) {
-    return TRUE;
-  }
-  return FALSE;
 }

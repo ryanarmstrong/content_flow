@@ -70,19 +70,6 @@ function content_flow_menu() {
     'type' => MENU_LOCAL_ACTION,
   );
 
-  // View the current draft of a node.
-  $items["node/%node/draft"] = array(
-    'title' => 'View draft',
-    'page callback' => 'content_flow_node_view_draft',
-    'page arguments' => array(1),
-    'access callback' => 'content_flow_access_current_draft',
-    'access arguments' => array(1),
-    'file path' => $module . '/inc/',
-    'file' => 'content_flow.pages.inc',
-    'type' => MENU_LOCAL_TASK,
-    'weight' => -9,
-  );
-
   // Content Flow Settings Pages
   $items['admin/config/content/content-flow'] = array(
     'title' => 'Content Flow',
@@ -151,6 +138,10 @@ function content_flow_menu_alter(&$items) {
     'file' => 'content_flow.pages.inc',
   );
 
+  // Override the node/X page to ensure that the right revision is displayed.
+  $items['node/%node']['page callback'] = 'content_flow_node_page_view_override';
+  $items['node/%node']['type'] = MENU_CALLBACK;
+
   // Override the node/X/edit page to ensure that the right revision (most current) is displayed.
   $items['node/%node/edit']['page callback'] = 'content_flow_node_edit_page_override';
 
@@ -161,6 +152,34 @@ function content_flow_menu_alter(&$items) {
   // Override the node view menu item title.
   $items['node/%node/view']['title callback'] = 'content_flow_view_tab_title';
   $items['node/%node/view']['title arguments'] = array(1);
+  $items['node/%node/view']['type'] = MENU_CALLBACK;
+
+  // Remove uneeded routes.
+  unset($items['node/%node/revisions']);
+}
+
+/**
+ * Overrides the node/%/edit page to ensure the proper revision is shown.
+ *
+ * @param $node
+ *   The node being acted upon.
+ * @return
+ *   A node editing form.
+ */
+function content_flow_node_page_view_override($node) {
+  $query_parameters = drupal_get_query_parameters();
+  if (!empty($query_parameters['view_mode'])) {
+    $_SESSION['content_flow_view_mode'][$node->nid] = $query_parameters['view_mode'];
+    drupal_goto('node/' . $node->nid);
+  }
+  // Load the appropriete view mode.
+  if (!empty($_SESSION['content_flow_view_mode'][$node->nid]) && $_SESSION['content_flow_view_mode'][$node->nid] == 'draft') {
+    $node = content_flow_node_latest_revision($node);
+  }
+
+  // Ensure we have the editing code.
+  module_load_include('inc', 'node', 'node.pages');
+  return node_page_view($node);
 }
 
 /**
@@ -179,6 +198,38 @@ function content_flow_node_edit_page_override($node) {
   // Ensure we have the editing code.
   module_load_include('inc', 'node', 'node.pages');
   return node_page_edit($node);
+}
+
+/**
+ * Change the name of the node edit tab, conditionally.
+ *
+ * @param $node
+ *   The node being acted upon.
+ *
+ * @return
+ *   The title for the tab.
+ */
+function content_flow_edit_tab_title($node) {
+  if (content_flow_node_working_draft($node)) {
+    return t('Edit draft');
+  }
+  return t('New draft');
+}
+
+/**
+ * Change the name of the node edit tab, conditionally.
+ *
+ * @param $node
+ *   The node being acted upon.
+ *
+ * @return
+ *   The title for the tab.
+ */
+function content_flow_view_tab_title($node) {
+  if ($node->status == '1') {
+    return t('View published');
+  }
+  return t('View draft');
 }
 
 /**
@@ -343,8 +394,9 @@ function content_flow_form_node_form_alter(&$form, $form_state, $node) {
  */
 function content_flow_url_outbound_alter(&$path, &$options, $original_path) {
   // Instead of pointing to node/[nid]/revisions/[vid]/view, point to node/[nid]/draft.
+  // TO-DO: This prevents viewing old revisions. This should be corrected.
   if (preg_match('|^node/([0-9]*)/revisions/([0-9]*)/view(/.*)?|', $path, $matches)) {
-    $path = 'node/' . $matches[1] . '/draft';
+    $path = 'node/' . $matches[1];
   }
   // Instead of pointing to node/[nid]/revisions/[vid]/edit, point to node/[nid]/edit.
   if (preg_match('|^node/([0-9]*)/revisions/([0-9]*)/edit(/.*)?|', $path, $matches)) {
@@ -353,44 +405,12 @@ function content_flow_url_outbound_alter(&$path, &$options, $original_path) {
 }
 
 /**
- * Change the name of the node edit tab, conditionally.
+ * Returns wheter or not there is a working draft for a node.
  *
  * @param $node
  *   The node being acted upon.
- *
- * @return
- *   The title for the tab.
- */
-function content_flow_edit_tab_title($node) {
-  if (content_flow_node_working_draft($node)) {
-    return t('Edit draft');
-  }
-  return t('New draft');
-}
-
-/**
- * Change the name of the node edit tab, conditionally.
- *
- * @param $node
- *   The node being acted upon.
- *
- * @return
- *   The title for the tab.
- */
-function content_flow_view_tab_title($node) {
-  if ($node->status == '1') {
-    return t('View published');
-  }
-  return t('View draft');
-}
-
-/**
- * Helper function to determin if there is a working draft of a node
- *
- * @param $node
- *   The node being acted upon.
- * @return
- *   A node editing form.
+ * @return boolean
+ *   TRUE if there is a working draft, otherwise returns FALSE.
  */
 function content_flow_node_working_draft($node) {
   $states = state_flow_get_revisions($node->nid);
@@ -579,4 +599,71 @@ function _content_flow_create_revision_entries($revision) {
     'log' => $node_revisions_log,
   ))
   ->execute();
+}
+
+/**
+ * Checks whether you are viewing a node page.
+ *
+ * @return
+ *   TRUE when path is in the active trail, FALSE if not.
+ */
+function _content_flow_is_node_page() {
+  if (menu_get_object()) {
+    return TRUE;
+  }
+  return FALSE;
+}
+
+/**
+ * Returns which context you are viewing a node (view/edit/workflow).
+ *
+ * @return string
+ *   Returns the context in which you are viewing the node.
+ */
+function _content_flow_node_context() {
+  // Check if the context is viewing a node.
+  if ((arg(0) == 'node' && is_numeric(arg(1)) && empty(arg(2))) || ((arg(0) == 'node' && is_numeric(arg(1)) && arg(2) == 'view'))) {
+    return 'view';
+  }
+  // Check if the context is editing a node.
+  if (arg(0) == 'node' && is_numeric(arg(1)) && arg(2) == 'edit') {
+    return 'edit';
+  }
+  // Check if the context is viewing a nodes workflow.
+  if (arg(0) == 'node' && is_numeric(arg(1)) && arg(2) == 'workflow') {
+    return 'workflow';
+  }
+}
+
+/**
+ * Returns the active revisions for a node.
+ *
+ * @param int $nid
+ *   The node id of the node to return the active revisions for.
+ *
+ * @return array
+ *   An array of active revisions.
+ */
+function _content_flow_get_active_revisions($nid) {
+  $active_revisions = array();
+  $result = db_query("SELECT nid, vid, state, timestamp FROM {node_revision_states} WHERE status = 1 AND nid = :nid", array(':nid' => $nid));
+  $active_revisions = $result->fetchAll();
+  return $active_revisions;
+}
+
+/**
+ * Returns the active view mode for a node.
+ *
+ * @param int $nid
+ *   The node id of the node to return the active revisions for.
+ *
+ * @return array
+ *   An array of active revisions.
+ */
+function _content_flow_get_current_view_mode($node) {
+  // If a view mode hasn't been set, set one.
+  if (empty($_SESSION['content_flow_view_mode'][$node->nid])) {
+    $_SESSION['content_flow_view_mode'][$node->nid] = ($node->status == 1) ? 'published' : 'draft';
+  }
+  return $_SESSION['content_flow_view_mode'][$node->nid];
 }
