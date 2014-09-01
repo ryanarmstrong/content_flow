@@ -304,10 +304,13 @@ function content_flow_admin_nodes($variables) {
         $statuses .= ' ' . content_flow_generate_status_label($revision['state'], 'info');
       }
     }
-
+    // Bug: For some reason l(), url(), drupal_get_path_alias() etc are returning
+    //      an extra '/' for nodes that are published and have a draft. Silly
+    //      workaround.
+    $node_path = str_replace('//node', '/node', url('node/' . $nid));
     $options[$nid] = array(
       'title' => array(
-        'data' => l($node['title'], 'node/' . $nid),
+        'data' => '<a href="' . $node_path . '">' . $node['title'] . '</a>',
       ),
       'type' => array(
         'data' => check_plain(node_type_get_name($node['type'])),
