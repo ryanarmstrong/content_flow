@@ -299,9 +299,11 @@ function content_flow_admin_nodes($variables) {
 
     // Prepare status lables
     $statuses = content_flow_generate_status_label($node['current_revision']['state']);
-    foreach ($node['other_revisions'] as $revision) {
-      if ($revision['state'] != 'unpublished' && $revision['status'] == 1) {
-        $statuses .= ' ' . content_flow_generate_status_label($revision['state'], 'info');
+    if (!empty($node['other_revisions'])) {
+      foreach ($node['other_revisions'] as $revision) {
+        if ($revision['state'] != 'unpublished' && $revision['status'] == 1) {
+          $statuses .= ' ' . content_flow_generate_status_label($revision['state'], 'info');
+        }
       }
     }
     // Bug: For some reason l(), url(), drupal_get_path_alias() etc are returning
@@ -342,9 +344,9 @@ function content_flow_admin_nodes($variables) {
 
     // Build a list of all the accessible operations for the current node.
     $operations = array();
-    if (node_access('update', $node)) {
+    if (node_access('update', node_load($nid))) {
       $edit_title = 'New Draft';
-      if ($node['working_draft'] || $node['current_revision']['state'] == 'draft' || $node['current_revision']['state'] == 'needs review') {
+      if (!empty($node['working_draft']) || $node['current_revision']['state'] == 'draft' || $node['current_revision']['state'] == 'needs review') {
         $edit_title = 'Edit Draft';
       }
       $operations['edit'] = array(
@@ -405,7 +407,7 @@ function content_flow_admin_nodes($variables) {
     '#attributes' => array('id' => $variables['table_id']),
   );
   $form['pager'] = array('#markup' => theme('pager'));
-  if ($variables['type'] == 'tableselect') {
+  if (!empty($variables['type']) && $variables['type'] == 'tableselect') {
     $form['nodes']['#type'] = 'tableselect';
     $form['nodes']['#options'] = $options;
     unset($form['nodes']['#rows']);
@@ -483,6 +485,9 @@ function content_flow_generate_node_array($results) {
     $nodes[$result->nid]['created'] = $result->created;
 
     // Set the latest updated date.
+    if (empty($nodes[$result->nid]['updated'])) {
+      $nodes[$result->nid]['updated'] = $result->timestamp;
+    }
     if ($result->timestamp > $nodes[$result->nid]['updated']) {
       $nodes[$result->nid]['updated'] = $result->timestamp;
     }
