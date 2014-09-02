@@ -11,28 +11,40 @@ require_once 'content_flow.admin.inc';
  * Page callback; presents the node editing form.
  */
 function content_flow_dashboard_page() {
-  $width_class = 'col-md-12';
   $build = '<div class="row">';
 
-  // Build the 'Needs Review' section.
-  if (user_access('approve and reject content')) {
-    $needs_review_block = '<section id="needs-review" class="col-md-6">';
-    $needs_review_block .= '<h2>Needs Review</h2>';
-    $form = drupal_get_form('needs_review');
-    $needs_review_block .= drupal_render($form);
-    $needs_review_block .= '</section>';
-    $width_class = 'col-md-6';
-  }
-
   // Build the 'My Latest Content' section.
-  $my_latest_content_block = '<section id="my-latest-content" class="' . $width_class . '">';
+  $my_latest_content_block = '<section id="my-latest-content" style="position: relative;">';
   $my_latest_content_block .= '<h2>My Latest Content</h2>';
-  $form = drupal_get_form('my_latest_content');
+  $form = drupal_get_form('my_latest_content_block');
   $my_latest_content_block .= drupal_render($form);
   $my_latest_content_block .= '</section>';
 
-  $build .= $my_latest_content_block;
-  $build .= $needs_review_block;
+  // Build the 'Needs Review' and 'All Content' section.
+  if (user_access('approve and reject content')) {
+    $needs_review_block = '<section id="needs-review" style="position: relative;">';
+    $needs_review_block .= '<h2>Needs Review</h2>';
+    $form = drupal_get_form('needs_review_block');
+    $needs_review_block .= drupal_render($form);
+    $needs_review_block .= '</section>';
+
+    // Build the 'All Content' section.
+    $all_content_block .= '<section id="all-content" class="col-md-8" style="position: relative;">';
+    $all_content_block .= '<h2>All Content</h2>';
+    $form = drupal_get_form('all_content_block');
+    $all_content_block .= drupal_render($form);
+    $all_content_block .= '</section>';
+
+    $build .= $all_content_block;
+    $build .= '<aside class="col-md-4">';
+    $build .= $my_latest_content_block;
+    $build .= $needs_review_block;
+    $build .= '</aside>';
+  } else {
+    $build .= '<div class="col-md-12">';
+    $build .= $my_latest_content_block;
+    $build .= '</div>';
+  }
 
   $build .= '</div>';
 
@@ -148,9 +160,28 @@ function content_flow_my_content_page($form, $form_state) {
 }
 
 /**
+ * Section; builds the All Content section.
+ */
+function all_content_block($form, $form_state) {
+  global $user;
+  $variables = array(
+    'filters' => array(
+      'language' => array('show' => FALSE, 'default' => isset($user->language) ? $user->language : NULL),
+    ),
+    'limit' => 10,
+    'more' => 'admin/content/node/all-content',
+    'caller' => 'all_content_block',
+    'table_id' => 'all-content-block-table',
+  );
+  $form = content_flow_build_revisions_admin($variables);
+
+  return $form;
+}
+
+/**
  * Section; builds the My Latest Content section.
  */
-function my_latest_content($form, $form_state) {
+function my_latest_content_block($form, $form_state) {
   global $user;
   $variables = array(
     'filters' => array(
@@ -159,6 +190,7 @@ function my_latest_content($form, $form_state) {
     ),
     'columns' => array(
       'author' => FALSE,
+      'changed' => FALSE,
     ),
     'limit' => 5,
     'more' => 'admin/content/node/my-content',
@@ -173,7 +205,7 @@ function my_latest_content($form, $form_state) {
 /**
  * Section; builds the Needs Review section.
  */
-function needs_review($form, $form_state) {
+function needs_review_block($form, $form_state) {
   global $user;
   $variables = array(
     'filters' => array(
@@ -182,6 +214,7 @@ function needs_review($form, $form_state) {
     ),
     'columns' => array(
       'status' => FALSE,
+      'changed' => FALSE,
     ),
     'limit' => 5,
     'more' => 'admin/content/node/review',
