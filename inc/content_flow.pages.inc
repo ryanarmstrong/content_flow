@@ -206,14 +206,7 @@ function content_flow_create_content() {
 function content_flow_events($node) {
   // Gather information on the current published revision
   $state_flow = state_flow_load_state_machine($node);
-  $events = $state_flow->get_available_events();
-  $current_revision_actions = array();
-  foreach ($events as $event_machine_name => $event) {
-    if (state_flow_access($node, $event_machine_name)) {
-      $current_revision_actions[] = l($event->get_option('label'), 'node/' . $node->nid . '/revisions/' . $node->vid . '/workflow/' . $event_machine_name);
-    }
-  }
-  $current_revision_actions_str = implode(' | ', $current_revision_actions);
+  $events = _content_flow_theme_events($state_flow, $node);
 
   // Build table for the active draft revisions and other revisions of this node
   $drafts_table = array(
@@ -345,11 +338,11 @@ function content_flow_events($node) {
       ),
     ),
   );
-  if (!empty($current_revision_actions_str)) {
+  if (!empty($events)) {
     $output['content']['current_revision']['current_revision_actions'] = array(
       '#type' => 'item',
       '#title' => t('Actions'),
-      '#markup' => $current_revision_actions_str,
+      '#markup' => $events,
     );
   }
   $output['content']['draft_revisions'] = array(
