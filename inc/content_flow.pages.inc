@@ -168,7 +168,7 @@ function all_content_block($form, $form_state) {
     'filters' => array(
       'language' => array('show' => FALSE, 'default' => isset($user->language) ? $user->language : NULL),
     ),
-    'limit' => 10,
+    'limit' => 13,
     'more' => 'admin/content/node/all-content',
     'caller' => 'all_content_block',
     'table_id' => 'all-content-block-table',
