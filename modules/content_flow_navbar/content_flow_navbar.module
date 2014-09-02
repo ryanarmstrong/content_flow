@@ -158,10 +158,10 @@ function navbar_view() {
     // Build the content management section.
     $content_menu = array();
     if (_node_add_access()) {
-      // $content_menu['content management header'] = array(
-      //   'title' => t('Manage Content'),
-      //   'type' => 'header'
-      // );
+      $content_menu['content management header'] = array(
+        'title' => t('Site Content'),
+        'type' => 'header'
+      );
       $content_menu['content dashboard'] = array(
         'title' => t('Content Dashboard'),
         'href' => '/admin/content',
@@ -218,9 +218,13 @@ function navbar_view() {
         $content_menu['viewing mode header']['title'] = t('View Content');
         foreach ($active_revisions as $revision) {
           if ($revision->state == 'published') {
+            // Bug: For some reason l(), url(), drupal_get_path_alias() etc are returning
+            //      an extra '/' for nodes that are published and have a draft. Silly
+            //      workaround.
+            $path = str_replace('//node', '/node', url('node/' . $node->nid, array('query' => array('view_mode' => 'published'))));
             $content_menu['view published'] = array(
               'title' => t('View Published'),
-              'href' => url('node/' . $node->nid),
+              'href' => $path,
               'attributes' => array(
                 'title' => t('View Published'), 
                 'alt' => t('View Published'),
@@ -228,10 +232,14 @@ function navbar_view() {
             );
             break;
           }
-          if ($revision->state == 'draft') {
+          if ($revision->state == 'draft' || $revision->state == 'needs review') {
+            // Bug: For some reason l(), url(), drupal_get_path_alias() etc are returning
+            //      an extra '/' for nodes that are published and have a draft. Silly
+            //      workaround.
+            $path = str_replace('//node', '/node', url('node/' . $node->nid, array('query' => array('view_mode' => 'draft'))));
             $content_menu['view draft'] = array(
               'title' => t('View Draft'),
-              'href' => url('node/' . $node->nid, array('query' => array('view_mode' => 'draft'))),
+              'href' => $path,
               'attributes' => array(
                 'title' => t('View Draft'), 
                 'alt' => t('View Draft'),
