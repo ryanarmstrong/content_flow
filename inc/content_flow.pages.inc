@@ -29,7 +29,7 @@ function content_flow_dashboard_page() {
     $needs_review_block .= '</section>';
 
     // Build the 'All Content' section.
-    $all_content_block .= '<section id="all-content" class="col-md-8" style="position: relative;">';
+    $all_content_block = '<section id="all-content" class="col-md-8" style="position: relative;">';
     $all_content_block .= '<h2>All Content</h2>';
     $form = drupal_get_form('all_content_block');
     $all_content_block .= drupal_render($form);
