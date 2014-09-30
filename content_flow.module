@@ -159,7 +159,7 @@ function content_flow_menu_alter(&$items) {
 }
 
 /**
- * Overrides the node/%/edit page to ensure the proper revision is shown.
+ * Overrides the node/%/view page to ensure the proper revision is shown.
  *
  * @param $node
  *   The node being acted upon.
@@ -167,16 +167,17 @@ function content_flow_menu_alter(&$items) {
  *   A node editing form.
  */
 function content_flow_node_page_view_override($node) {
-  $query_parameters = drupal_get_query_parameters();
-  if (!empty($query_parameters['view_mode'])) {
-    $_SESSION['content_flow_view_mode'][$node->nid] = $query_parameters['view_mode'];
-    drupal_goto('node/' . $node->nid);
+  if (_content_flow_managed_type($node->type)) {
+    $query_parameters = drupal_get_query_parameters();
+    if (!empty($query_parameters['view_mode'])) {
+      $_SESSION['content_flow_view_mode'][$node->nid] = $query_parameters['view_mode'];
+      drupal_goto('node/' . $node->nid);
+    }
+    // Load the appropriete view mode.
+    if (!empty($_SESSION['content_flow_view_mode'][$node->nid]) && $_SESSION['content_flow_view_mode'][$node->nid] == 'draft') {
+      $node = content_flow_node_latest_revision($node);
+    }
   }
-  // Load the appropriete view mode.
-  if (!empty($_SESSION['content_flow_view_mode'][$node->nid]) && $_SESSION['content_flow_view_mode'][$node->nid] == 'draft') {
-    $node = content_flow_node_latest_revision($node);
-  }
-
   // Ensure we have the editing code.
   module_load_include('inc', 'node', 'node.pages');
   return node_page_view($node);
@@ -192,7 +193,7 @@ function content_flow_node_page_view_override($node) {
  */
 function content_flow_node_edit_page_override($node) {
   // Check to see if this is an existing node
-  if (isset($node->nid)) {
+  if (isset($node->nid) && _content_flow_managed_type($node->type)) {
     $node = content_flow_node_latest_revision($node);
   }
   // Ensure we have the editing code.
@@ -210,10 +211,13 @@ function content_flow_node_edit_page_override($node) {
  *   The title for the tab.
  */
 function content_flow_edit_tab_title($node) {
-  if (content_flow_node_working_draft($node)) {
-    return t('Edit draft');
+  if (_content_flow_managed_type($node->type)) {
+    if (content_flow_node_working_draft($node)) {
+      return t('Edit draft');
+    }
+    return t('New draft');
   }
-  return t('New draft');
+  return t('Edit');
 }
 
 /**
@@ -226,10 +230,13 @@ function content_flow_edit_tab_title($node) {
  *   The title for the tab.
  */
 function content_flow_view_tab_title($node) {
-  if ($node->status == '1') {
-    return t('View published');
+  if (_content_flow_managed_type($node->type)) {
+    if ($node->status == '1') {
+      return t('View published');
+    }
+    return t('View draft');
   }
-  return t('View draft');
+  return $node->title;
 }
 
 /**
@@ -363,29 +370,31 @@ function content_flow_query_node_revision_alter(QueryAlterableInterface $query) 
  * Implements hook_form_FORM_ID_alter().
  */
 function content_flow_form_node_form_alter(&$form, $form_state, $node) {
-  // Take control of new revision and published settings. Only Content Flow
-  // should be able to set/alter these.
-  $form['revision_information']['revision'] = array(
-    '#type' => 'value',
-    '#value' => TRUE,
-  );
-  $states = state_flow_get_revisions($form['nid']['#value']);
-  foreach ($states as $state) {
-    if ($state->vid == $form['vid']['#value'] && ($state->state == 'draft' || $state->state == 'needs review')) {
-      $form['revision_information']['revision']['#value'] = FALSE;
+  if (_content_flow_managed_type($form['#node']->type)) {
+    // Take control of new revision and published settings. Only Content Flow
+    // should be able to set/alter these.
+    $form['revision_information']['revision'] = array(
+      '#type' => 'value',
+      '#value' => TRUE,
+    );
+    $states = state_flow_get_revisions($form['nid']['#value']);
+    foreach ($states as $state) {
+      if ($state->vid == $form['vid']['#value'] && ($state->state == 'draft' || $state->state == 'needs review')) {
+        $form['revision_information']['revision']['#value'] = FALSE;
+      }
     }
-  }
-  $form['options']['status'] = array(
-    '#type' => 'value',
-    '#value' => FALSE,
-  );
-  // Move the revision log into the publishing options.
-  if ($form['options']['#access']) {
-    $form['options']['log'] = $form['revision_information']['log'];
-    unset($form['revision_information']['log']);
+    $form['options']['status'] = array(
+      '#type' => 'value',
+      '#value' => FALSE,
+    );
+    // Move the revision log into the publishing options.
+    if ($form['options']['#access']) {
+      $form['options']['log'] = $form['revision_information']['log'];
+      unset($form['revision_information']['log']);
 
-    // The revision information section should now be empty.
-    $form['revision_information']['#access'] = FALSE;
+      // The revision information section should now be empty.
+      $form['revision_information']['#access'] = FALSE;
+    }
   }
 }
 
@@ -666,4 +675,42 @@ function _content_flow_get_current_view_mode($node) {
     $_SESSION['content_flow_view_mode'][$node->nid] = ($node->status == 1) ? 'published' : 'draft';
   }
   return $_SESSION['content_flow_view_mode'][$node->nid];
+}
+
+/**
+ * Returns the content types that are being moderated by Content Flow.
+ *
+ * @return array
+ */
+function _content_flow_get_active_content_types() {
+  $active_content_types = array();
+  foreach (node_type_get_types() as $content_type) {
+    if (variable_get('content_flow_active_' . $content_type->type) == 1) {
+      $active_content_types[] = $content_type->type;
+    }
+  }
+  return $active_content_types;
+}
+
+/**
+ * Returns whether or not a content type is being managed by Content Flow.
+ *
+ * @return boolean
+ *   Returns TRUE is the content type us being managed by Content Flow.
+ */
+function _content_flow_managed_type($type) {
+  if (in_array($type, _content_flow_get_active_content_types())) {
+    return TRUE;
+  }
+  return FALSE;
+}
+
+/**
+ * Returns whether or not there are content types not being managed by Content Flow.
+ *
+ * @return boolean
+ *   Returns TRUE if there are content types not being managed by Content Flow.
+ */
+function _content_flow_unmanaged_content_types() {
+  return (count(node_type_get_types()) != count(_content_flow_get_active_content_types()));
 }

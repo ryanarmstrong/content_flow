@@ -181,17 +181,19 @@ function navbar_view() {
     }
     // Build the local tasks for content management.
     $node = menu_get_object();
+    $content_flow_managed = _content_flow_managed_type($node->type);
     if ($node) {
       $active_revisions = _content_flow_get_active_revisions($node->nid);
       $context = _content_flow_node_context();
       $content_menu['viewing mode divider'] = array(
         'type' => 'divider',
       );
+      $node_status = ($node->status == 0) ? 'Unpublished' : 'Published';
       $content_menu['viewing mode header'] = array(
-        'title' => t('Viewing Published'),
+        'title' => t('Status: ' . $node_status),
         'type' => 'header'
       );
-      if ($context == 'view') {
+      if ($context == 'view' && $content_flow_managed) {
         // Build View Mode section
         $view_mode = _content_flow_get_current_view_mode($node);
         $view_mode_switch = ($view_mode == 'published') ? 'draft' : 'published';

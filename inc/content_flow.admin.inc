@@ -242,7 +242,7 @@ function content_flow_admin_nodes($variables) {
   $header = array(
     'title' => array('data' => t('Title'), 'field' => 'n.title'),
     'type' => array('data' => t('Type'), 'field' => 'n.type', 'class' => 'hidden-xs'),
-    'changed' => array('data' => t('Updated'), 'field' => 'nrs.timestamp', 'sort' => 'desc'),
+    'changed' => array('data' => t('Updated'), 'field' => 'n.changed', 'sort' => 'desc'),
     'author' => array('data' => t('Author'), 'field' => 'u.name', 'class' => 'hidden-xs'),
     'status' => array('data' => t('Status'), 'class' => 'hidden-xs'),
   );
@@ -258,23 +258,18 @@ function content_flow_admin_nodes($variables) {
 
   $header['operations'] = array('data' => t('Operations'));
 
-  $query = db_select('node_revision_states', 'nrs')->extend('TableSort');
+  $query = db_select('node', 'n')->extend('TableSort');
   if (!empty($variables['pager'])) {
-    $query = db_select('node_revision_states', 'nrs')->extend('PagerDefault')->extend('TableSort');
+    $query = db_select('node', 'n')->extend('PagerDefault')->extend('TableSort');
     $query->limit(50);
   }
-
-  $query->leftJoin('node', 'n', 'n.nid = nrs.nid');
   $query->leftJoin('users', 'u', 'n.uid = u.uid');
 
   $filters = isset($_SESSION[$form_id]) ? $_SESSION[$form_id] : array();
   $query
-    ->fields('nrs', array('nid', 'vid', 'state', 'timestamp', 'status'))
-    ->fields('n', array('title', 'type', 'uid', 'status', 'vid'))
+    ->fields('n', array('title', 'type', 'uid', 'status', 'vid', 'nid', 'changed'))
     ->fields('u', array('name'))
-    ->groupBy('nrs.nid')
     ->orderByHeader($header)
-    ->addTag('node_revision')
     ->addMetaData('filters', $filters);
 
   // Set the range if provided.
@@ -289,42 +284,45 @@ function content_flow_admin_nodes($variables) {
 
   $results = $query->execute();
 
-  // Build the node array.
-  $nodes = content_flow_generate_node_array($results);
-
   // Build the options.
   $options = array();
-  foreach ($nodes as $nid => $node) {
+  foreach ($results as $node) {
     // Prepare the list of nodes.
     $destination = drupal_get_destination();
 
-    // Prepare status lables
-    $statuses = content_flow_generate_status_label($node['node_current_revision']['state']);
-    if (!empty($node['other_revisions'])) {
-      foreach ($node['other_revisions'] as $revision) {
-        if ($revision['status'] == 1) {
-          $statuses .= ' ' . content_flow_generate_status_label($revision['state'], 'info');
+    // Prepare status lables.
+    $statuses = ($node->status) ? content_flow_generate_status_label('published') : content_flow_generate_status_label('unpublished');
+    $managed_content_type = _content_flow_managed_type($node->type);
+    // Check for working drafts.
+    if ($managed_content_type) {
+      $working_draft = FALSE;
+      $revisions = state_flow_get_revisions($node->nid);
+      foreach ($revisions as $revision) {
+        if ($revision->status == 1 && $revision->state != 'published') {
+          $statuses .= ' ' . content_flow_generate_status_label($revision->state, 'info');
+          $working_draft = TRUE;
         }
       }
     }
+
     // Bug: For some reason l(), url(), drupal_get_path_alias() etc are returning
     //      an extra '/' for nodes that are published and have a draft. Silly
     //      workaround.
-    $node_path = str_replace('//node', '/node', url('node/' . $nid));
-    $options[$nid] = array(
+    $node_path = str_replace('//node', '/node', url('node/' . $node->nid));
+    $options[$node->nid] = array(
       'title' => array(
-        'data' => '<a href="' . $node_path . '">' . $node['title'] . '</a>',
+        'data' => '<a href="' . $node_path . '">' . $node->title . '</a>',
       ),
       'type' => array(
-        'data' => check_plain(node_type_get_name($node['type'])),
+        'data' => check_plain(node_type_get_name($node->type)),
         'class' => 'hidden-xs',
       ),
-      'changed' => t('!time ago', array('!time' => format_interval((time() - $node['updated']), 2))),
+      'changed' => t('!time ago', array('!time' => format_interval((time() - $node->changed), 2))),
       'author' => array(
         'data' => array(
           '#type' => 'link',
-          '#title' => $node['author'],
-          '#href' => 'user/' . $node['author'],
+          '#title' => $node->name,
+          '#href' => 'user/' . $node->name,
         ),
         'class' => 'hidden-xs',
       ),
@@ -338,43 +336,46 @@ function content_flow_admin_nodes($variables) {
     if (isset($variables['columns'])) {
       foreach ($variables['columns'] as $column => $enabled) {
         if ($enabled === FALSE) {
-          unset($options[$nid][$column]);
+          unset($options[$node->nid][$column]);
         }
       }
     }
 
     // Build a list of all the accessible operations for the current node.
     $operations = array();
-    if (node_access('update', node_load($nid))) {
-      $edit_title = 'New Draft';
-      if ($node['working_draft']) {
-        $edit_title = 'Edit Draft';
+    if (node_access('update', node_load($node->nid))) {
+      $edit_title = 'edit content';
+      if ($managed_content_type) {
+        $edit_title = 'new draft';
+        if ($working_draft) {
+          $edit_title = 'edit draft';
+        }
       }
       $operations['edit'] = array(
         'title' => t($edit_title),
-        'href' => 'node/' . $nid . '/edit',
+        'href' => 'node/' . $node->nid . '/edit',
         'query' => $destination,
       );
     }
-    if (user_access('manage content workflow')) {
+    if (user_access('manage content workflow') && $managed_content_type) {
       $operations['workflow'] = array(
         'title' => t('workflow'),
-        'href' => 'node/' . $nid . '/workflow',
+        'href' => 'node/' . $node->nid . '/workflow',
         'query' => $destination,
       );
     }
     if (user_access('administer nodes')) {
       $operations['delete'] = array(
         'title' => t('delete'),
-        'href' => 'node/' . $nid . '/delete',
+        'href' => 'node/' . $node->nid . '/delete',
         'query' => $destination,
       );
     }
 
-    $options[$nid]['operations'] = array();
+    $options[$node->nid]['operations'] = array();
     if (count($operations) > 1) {
       // Render an unordered list of operations links.
-      $options[$nid]['operations'] = array(
+      $options[$node->nid]['operations'] = array(
         'data' => array(
           '#theme' => 'bootstrap_btn_dropdown',
           '#links' => $operations,
@@ -388,7 +389,7 @@ function content_flow_admin_nodes($variables) {
     elseif (!empty($operations)) {
       // Render the first and only operation as a link.
       $link = reset($operations);
-      $options[$nid]['operations'] = array(
+      $options[$node->nid]['operations'] = array(
         'data' => array(
           '#type' => 'link',
           '#title' => $link['title'],
@@ -474,48 +475,6 @@ function content_flow_admin_nodes_submit($form, &$form_state) {
 }
 
 /**
- * Generates an array of nodes with needed information for the Content Flow
- * views using an executed Query object.
- */
-function content_flow_generate_node_array($results) {
-  $nodes = array();
-  foreach ($results as $result) {
-    $nodes[$result->nid]['title'] = $result->title;
-    $nodes[$result->nid]['type'] = $result->type;
-    $nodes[$result->nid]['author'] = $result->name;
-    $nodes[$result->nid]['updated'] = $result->timestamp;
-    $nodes[$result->nid]['working_draft'] = FALSE;
-    // Set revision information.
-    $revisions = state_flow_get_revisions($result->nid);
-    foreach ($revisions as $revision) {
-      switch ($revision->vid) {
-        case $result->n_vid:
-          $nodes[$result->nid]['node_current_revision'] = array(
-            'vid' => $revision->vid,
-            'state' => $revision->state,
-            'updated' => $revision->timestamp,
-            'status' => $revision->status,
-          );
-          break;
-        
-        default:
-          $nodes[$result->nid]['other_revisions'][] = array(
-            'vid' => $revision->vid,
-            'state' => $revision->state,
-            'updated' => $revision->timestamp,
-            'status' => $revision->status,
-          );
-          break;
-      }
-      if (($revision->state == 'draft' || $revision->state == 'needs review') && $revision->status) {
-        $nodes[$result->nid]['working_draft'] = TRUE;
-      }
-    }
-  }
-  return $nodes;
-}
-
-/**
  * Generates a status label.
  */
 function content_flow_generate_status_label($status_name, $variation = 'default') {
@@ -534,10 +493,18 @@ function _content_flow_split_keys($key) {
 }
 
 function content_flow_admin_settings($form, $form_state) {
-  $form['content_flow_placeholder'] = array(
-    '#type' => 'markup',
-    '#markup' => '<p>Placeholder for Content Flow settings.</p>',
+  $form['content_flow_content_types'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Content Types'),
+    '#description' => t('Select which content types should be managed by Content Flow.'),
   );
+  foreach (node_type_get_types() as $content_type) {
+    $form['content_flow_content_types']['content_flow_active_' . $content_type->type] = array(
+      '#type' => 'checkbox',
+      '#title' => $content_type->name,
+      '#default_value' => variable_get('content_flow_active_' . $content_type->type, 0),
+    );
+  }
 
   return system_settings_form($form);
 }

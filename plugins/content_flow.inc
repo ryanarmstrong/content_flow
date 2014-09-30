@@ -75,6 +75,13 @@ class ContentFlow extends StateFlow {
 
     return $this->events[$key];
   }
+
+  public function ignore() {
+    if (_content_flow_managed_type($this->object->type)) {
+      return FALSE;
+    }
+    return TRUE;
+  }
 }
 
 class ContentFlow_Event extends StateFlow_Event {
