@@ -181,8 +181,8 @@ function navbar_view() {
     }
     // Build the local tasks for content management.
     $node = menu_get_object();
-    $content_flow_managed = _content_flow_managed_type($node->type);
     if ($node) {
+      $content_flow_managed = _content_flow_managed_type($node->type);
       $active_revisions = _content_flow_get_active_revisions($node->nid);
       $context = _content_flow_node_context();
       $content_menu['viewing mode divider'] = array(
