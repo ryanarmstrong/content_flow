@@ -329,7 +329,7 @@ function navbar_view() {
     ),
   );
   // Add a logo
-  $build['navbar_logo'] = l(theme_image(array('path' => theme_get_setting('logo'), 'height' => '34px')), '<front>', array('attributes' => array('id' => 'logo', 'class' => array('logo navbar-btn pull-left')), 'html' => TRUE));
+  $build['navbar_logo'] = l(theme_image(array('path' => theme_get_setting('logo'), 'height' => '34px', 'attributes' => array())), '<front>', array('attributes' => array('id' => 'logo', 'class' => array('logo navbar-btn pull-left')), 'html' => TRUE));
 
   return $build;
 }
