@@ -178,6 +178,16 @@ function navbar_view() {
           'alt' => t('Add Content'),
         ),
       );
+      if (user_access('administer taxonomy')) {
+        $content_menu['edit taxonomy'] = array(
+          'title' => t('Edit Taxonomy'),
+          'href' => '/admin/structure/taxonomy',
+          'attributes' => array(
+            'title' => t('Edit Taxonomy'), 
+            'alt' => t('Edit Taxonomy'),
+          ),
+        );
+      }
     }
     // Build the local tasks for content management.
     $node = menu_get_object();
