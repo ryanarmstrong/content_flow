@@ -226,7 +226,7 @@ function navbar_view() {
           );
         }
       }
-      if ($context == 'edit' || $context == 'workflow') {
+      if (($context == 'edit' || $context == 'workflow') && count($active_revisions) >= 1) {
         $content_menu['viewing mode header']['title'] = t('View Content');
         foreach ($active_revisions as $revision) {
           if ($revision->state == 'published') {
