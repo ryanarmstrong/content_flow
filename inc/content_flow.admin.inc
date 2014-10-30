@@ -169,6 +169,39 @@ function content_flow_filter_form($variables) {
 }
 
 /**
+ * Implements hook_query_node_revision_alter().
+ */
+function content_flow_build_filter_query(QueryAlterableInterface $query) {
+  // Get the filter form the session.
+  $filters = $query->getMetaData('filters');
+
+  // Modify the query for the 'Status' filter.
+  // if ($filter = isset($filters['status']) ? $filters['status'] : NULL) {
+  //   $query->condition('nrs.state', $filter);
+  // }
+
+  // Modify the query for the 'Type' filter.
+  if ($filter = isset($filters['type']) ? $filters['type'] : NULL) {
+    $query->condition('n.type', $filter);
+  }
+
+  // Modify the query for the 'Author' filter.
+  if ($filter = isset($filters['author']) ? $filters['author'] : NULL) {
+    $query->condition('u.name', $filter);
+  }
+
+  // Modify the query for the 'Title' filter.
+  if ($filter = isset($filters['title']) ? $filters['title'] : NULL) {
+    $query->condition('n.title', '%' . $filter . '%', 'LIKE');
+  }
+
+  // Modify the query for the 'Language' filter.
+  if ($filter = isset($filters['language']) ? $filters['language'] : NULL) {
+    $query->condition('n.language', $filter);
+  }
+}
+
+/**
  * Process result from node administration filter form.
  */
 function content_flow_filter_form_submit($form, &$form_state) {
@@ -266,11 +299,13 @@ function content_flow_admin_nodes($variables) {
   $query->leftJoin('users', 'u', 'n.uid = u.uid');
 
   $filters = isset($_SESSION[$form_id]) ? $_SESSION[$form_id] : array();
+  $query->addMetaData('filters', $filters);
+  content_flow_build_filter_query($query);
+
   $query
     ->fields('n', array('title', 'type', 'uid', 'status', 'vid', 'nid', 'changed'))
     ->fields('u', array('name'))
-    ->orderByHeader($header)
-    ->addMetaData('filters', $filters);
+    ->orderByHeader($header);
 
   // Set the range if provided.
   if (isset($variables['limit'])) {
