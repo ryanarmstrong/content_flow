@@ -133,6 +133,10 @@ function navbar_view() {
     ),
   );
 
+  // Enable language column if translation module is enabled or if we have any
+  // node with language.
+  $multilanguage = (module_exists('translation') || db_query_range("SELECT 1 FROM {node} WHERE language <> :language", 0, 1, array(':language' => LANGUAGE_NONE))->fetchField());
+
   // Add logout & user account links or login link.
   $items = array();
   if ($user->uid) {
@@ -278,6 +282,10 @@ function navbar_view() {
             'alt' => t($local_task['#link']['title']),
           ),
         );
+        if ($multilanguage) {
+          $langcode = entity_language('node', $node);
+          $content_menu[strtolower($local_task['#link']['title'])]['href'] = '/' . $langcode . '/' . $local_task['#link']['href'];
+        }
       }
     }
     if (count($content_menu > 0)) {

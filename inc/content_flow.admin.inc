@@ -25,21 +25,21 @@ function content_flow_revision_filters($variables) {
   $filters = array();
 
   // Build the 'Status' filter.
-  $options = array();
+  // $options = array();
 
-  if ($states = state_flow_get_all_states()) {
-    $options = array_combine(array_keys($states), array_keys($states));
-  }
+  // if ($states = state_flow_get_all_states()) {
+  //   $options = array_combine(array_keys($states), array_keys($states));
+  // }
 
-  array_unshift($options, 'any');
-  $filters['status'] = array(
-    'form' => array(
-      '#type' => 'select',
-      '#title' => t('Status'),
-      '#options' => $options,
-      '#access' => isset($variables['filters']['status']['show']) ? $variables['filters']['status']['show'] : TRUE,
-    ),
-  );
+  // array_unshift($options, 'any');
+  // $filters['status'] = array(
+  //   'form' => array(
+  //     '#type' => 'select',
+  //     '#title' => t('Status'),
+  //     '#options' => $options,
+  //     '#access' => isset($variables['filters']['status']['show']) ? $variables['filters']['status']['show'] : TRUE,
+  //   ),
+  // );
 
   // Build the 'Type' filter.
   $options = array();
@@ -61,14 +61,14 @@ function content_flow_revision_filters($variables) {
   );
 
   // Build an 'Author' filter.
-  $filters['author'] = array(
-    'form' => array(
-      '#type' => 'textfield',
-      '#title' => t('Author'),
-      '#default_value' => '',
-      '#access' => isset($variables['filters']['author']['show']) ? $variables['filters']['author']['show'] : TRUE,
-    ),
-  );
+  // $filters['author'] = array(
+  //   'form' => array(
+  //     '#type' => 'textfield',
+  //     '#title' => t('Author'),
+  //     '#default_value' => '',
+  //     '#access' => isset($variables['filters']['author']['show']) ? $variables['filters']['author']['show'] : TRUE,
+  //   ),
+  // );
 
   // Build an 'Title' filter.
   $filters['title'] = array(
@@ -186,9 +186,9 @@ function content_flow_build_filter_query(QueryAlterableInterface $query) {
   }
 
   // Modify the query for the 'Author' filter.
-  if ($filter = isset($filters['author']) ? $filters['author'] : NULL) {
-    $query->condition('u.name', $filter);
-  }
+  // if ($filter = isset($filters['author']) ? $filters['author'] : NULL) {
+  //   $query->condition('u.name', $filter);
+  // }
 
   // Modify the query for the 'Title' filter.
   if ($filter = isset($filters['title']) ? $filters['title'] : NULL) {
@@ -271,12 +271,16 @@ function content_flow_admin_nodes($variables) {
     );
   }
 
+  // Enable language column if translation module is enabled or if we have any
+  // node with language.
+  $multilanguage = (module_exists('translation') || db_query_range("SELECT 1 FROM {node} WHERE language <> :language", 0, 1, array(':language' => LANGUAGE_NONE))->fetchField());
+
   // Build the sortable table header.
   $header = array(
     'title' => array('data' => t('Title'), 'field' => 'n.title'),
     'type' => array('data' => t('Type'), 'field' => 'n.type', 'class' => 'hidden-xs'),
     'changed' => array('data' => t('Updated'), 'field' => 'n.changed', 'sort' => 'desc'),
-    'author' => array('data' => t('Author'), 'field' => 'u.name', 'class' => 'hidden-xs'),
+    'author' => array('data' => t('Author'), 'class' => 'hidden-xs'),
     'status' => array('data' => t('Status'), 'class' => 'hidden-xs'),
   );
 
@@ -296,16 +300,16 @@ function content_flow_admin_nodes($variables) {
     $query = db_select('node', 'n')->extend('PagerDefault')->extend('TableSort');
     $query->limit(50);
   }
-  $query->leftJoin('users', 'u', 'n.uid = u.uid');
+  $query->addTag('node_admin_filter');
 
   $filters = isset($_SESSION[$form_id]) ? $_SESSION[$form_id] : array();
   $query->addMetaData('filters', $filters);
   content_flow_build_filter_query($query);
 
   $query
-    ->fields('n', array('title', 'type', 'uid', 'status', 'vid', 'nid', 'changed'))
-    ->fields('u', array('name'))
-    ->orderByHeader($header);
+    ->fields('n', array('nid'))
+    ->orderByHeader($header)
+    ->addTag('node_access');
 
   // Set the range if provided.
   if (isset($variables['limit'])) {
@@ -317,14 +321,16 @@ function content_flow_admin_nodes($variables) {
     $query->orderBy($variables['orderby']['field'], $variables['orderby']['sort']);
   }
 
-  $results = $query->execute();
+  $nids = $query->execute()->fetchCol();
+  $nodes = node_load_multiple($nids);
+
+  // Prepare the list of nodes.
+  $languages = language_list();
+  $destination = drupal_get_destination();
 
   // Build the options.
   $options = array();
-  foreach ($results as $node) {
-    // Prepare the list of nodes.
-    $destination = drupal_get_destination();
-
+  foreach ($nodes as $node) {
     // Prepare status lables.
     $statuses = ($node->status) ? content_flow_generate_status_label('published') : content_flow_generate_status_label('unpublished');
     $managed_content_type = _content_flow_managed_type($node->type);
@@ -340,31 +346,25 @@ function content_flow_admin_nodes($variables) {
       }
     }
 
-    // Bug: For some reason l(), url(), drupal_get_path_alias() etc are returning
-    //      an extra '/' for nodes that are published and have a draft. Silly
-    //      workaround.
-    $node_path = str_replace('//node', '/node', url('node/' . $node->nid));
+    $langcode = entity_language('node', $node);
+    $l_options = $langcode != LANGUAGE_NONE && isset($languages[$langcode]) ? array('language' => $languages[$langcode]) : array();
     $options[$node->nid] = array(
       'title' => array(
-        'data' => '<a href="' . $node_path . '">' . $node->title . '</a>',
-      ),
-      'type' => array(
-        'data' => check_plain(node_type_get_name($node->type)),
-        'class' => 'hidden-xs',
-      ),
-      'changed' => t('!time ago', array('!time' => format_interval((time() - $node->changed), 2))),
-      'author' => array(
         'data' => array(
           '#type' => 'link',
-          '#title' => $node->name,
-          '#href' => 'user/' . $node->name,
+          '#title' => $node->title,
+          '#href' => 'node/' . $node->nid,
+          '#options' => $l_options,
+          '#suffix' => ' ' . theme('mark', array('type' => node_mark($node->nid, $node->changed))),
         ),
-        'class' => 'hidden-xs',
       ),
+      'type' => check_plain(node_type_get_name($node)),
+      'author' => theme('username', array('account' => $node)),
       'status' => array(
         'data' => $statuses,
         'class' => 'hidden-xs',
       ),
+      'changed' => t('!time ago', array('!time' => format_interval((time() - $node->changed), 2))),
     );
 
     // Conditionally remove unneeded columns.
@@ -391,6 +391,9 @@ function content_flow_admin_nodes($variables) {
         'href' => 'node/' . $node->nid . '/edit',
         'query' => $destination,
       );
+      if ($multilanguage) {
+        $operations['edit']['href'] = $langcode . '/node/' . $node->nid . '/edit';
+      }
     }
     if (user_access('manage content workflow') && $managed_content_type) {
       $operations['workflow'] = array(
