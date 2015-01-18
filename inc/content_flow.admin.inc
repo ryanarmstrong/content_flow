@@ -391,8 +391,8 @@ function content_flow_admin_nodes($variables) {
         'href' => 'node/' . $node->nid . '/edit',
         'query' => $destination,
       );
-      if ($multilanguage) {
-        $operations['edit']['href'] = $langcode . '/node/' . $node->nid . '/edit';
+      if ($multilanguage && !empty($languages[$langcode]->prefix)) {
+        $operations['edit']['href'] = $languages[$langcode]->prefix . '/node/' . $node->nid . '/edit';
       }
     }
     if (user_access('manage content workflow') && $managed_content_type) {
