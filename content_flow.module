@@ -5,6 +5,8 @@
  * Content Flow implementation of the State Flow module
  */
 
+xautoload()->registerModulePsr4(__FILE__, 'src');
+
 require_once 'inc/content_flow.activity.inc';
 
 /**
@@ -12,63 +14,18 @@ require_once 'inc/content_flow.activity.inc';
  */
 function content_flow_menu() {
   $module = drupal_get_path('module', 'content_flow');
-  // $items['admin/content/node/all-content'] = array(
-  //   'title' => 'All Content',
-  //   'description' => 'Show all content on the site.',
-  //   'page callback' => 'drupal_get_form',
-  //   'page arguments' => array('content_flow_all_content_page'),
-  //   'access arguments' => array('access content overview'),
-  //   'file path' => $module . '/inc/',
-  //   'file' => 'content_flow.pages.inc',
-  //   'type' => MENU_LOCAL_TASK,
-  //   'weight' => -3,
-  // );
-  // $items['admin/content/node/review'] = array(
-  //   'title' => 'Needs Review',
-  //   'description' => 'Show content that is in the review state.',
-  //   'page callback' => 'drupal_get_form',
-  //   'page arguments' => array('content_flow_needs_review_page'),
-  //   'access arguments' => array('approve and reject content'),
-  //   'file path' => $module . '/inc/',
-  //   'file' => 'content_flow.pages.inc',
-  //   'type' => MENU_LOCAL_TASK,
-  //   'weight' => -4,
-  // );
-  // $items['admin/content/node/my-content'] = array(
-  //   'title' => 'My Content',
-  //   'description' => 'Show all content that is authored by the current user.',
-  //   'page callback' => 'drupal_get_form',
-  //   'page arguments' => array('content_flow_my_content_page'),
-  //   'access arguments' => array('access content overview'),
-  //   'file path' => $module . '/inc/',
-  //   'file' => 'content_flow.pages.inc',
-  //   'type' => MENU_LOCAL_TASK,
-  //   'weight' => -5,
-  // );
-  // $items['admin/content/node/my-content/add'] = array(
-  //   'title' => 'Add content',
-  //   'page callback' => 'content_flow_create_content',
-  //   'access arguments' => array('access content overview'),
-  //   'file path' => $module . '/inc/',
-  //   'file' => 'content_flow.pages.inc',
-  //   'type' => MENU_LOCAL_ACTION,
-  // );
-  // $items['admin/content/node/all-content/add'] = array(
-  //   'title' => 'Add content',
-  //   'page callback' => 'content_flow_create_content',
-  //   'access arguments' => array('access content overview'),
-  //   'file path' => $module . '/inc/',
-  //   'file' => 'content_flow.pages.inc',
-  //   'type' => MENU_LOCAL_ACTION,
-  // );
-  // $items['admin/content/node/review/add'] = array(
-  //   'title' => 'Add content',
-  //   'page callback' => 'content_flow_create_content',
-  //   'access arguments' => array('access content overview'),
-  //   'file path' => $module . '/inc/',
-  //   'file' => 'content_flow.pages.inc',
-  //   'type' => MENU_LOCAL_ACTION,
-  // );
+
+  // Content Flow Taxonomy Page
+  $items['admin/content/taxonomy'] = array(
+    'title' => 'Taxonomy Dashboard',
+    'description' => 'Find and manage content.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('content_flow_taxonomy_dashboard'),
+    'access arguments' => array('access taxonomy overview'),
+    'weight' => -5,
+    'file path' => $module . '/inc/',
+    'file' => 'content_flow.pages.inc',
+  );
 
   // Content Flow Settings Pages
   $items['admin/config/content/content-flow'] = array(
@@ -106,20 +63,7 @@ function content_flow_menu_alter(&$items) {
   unset($items['admin/content']);
   unset($items['admin/content/node']);
   $module = drupal_get_path('module', 'content_flow');
-  // $items['admin/content'] = array(
-  //   'title' => 'Content Dashboard',
-  //   'description' => 'Find and manage content.',
-  //   'page callback' => 'content_flow_dashboard_page',
-  //   'access arguments' => array('access content overview'),
-  //   'weight' => -10,
-  //   'file path' => $module . '/inc/',
-  //   'file' => 'content_flow.pages.inc',
-  // );
-  // $items['admin/content/node'] = array(
-  //   'title' => 'Content Dashboard',
-  //   'type' => MENU_DEFAULT_LOCAL_TASK,
-  //   'weight' => -10,
-  // );
+
   $items['admin/content'] = array(
     'title' => 'Content Dashboard',
     'description' => 'Find and manage content.',
@@ -262,6 +206,10 @@ function content_flow_permission() {
     'approve and reject content' => array(
       'title' => t('Approve and reject content'),
       'description' => t('Approve or reject content, tranisionting it to either the published or draft state.'),
+    ),
+    'access taxonomy overview' => array(
+      'title' => t('Access taxonomy overview'),
+      'description' => t('View taxonony vocabularies and manage them.'),
     ),
   );
 }
