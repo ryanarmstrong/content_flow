@@ -147,8 +147,8 @@ function navbar_view() {
       'icon' => 'user',
       'href' => '/user',
       'attributes' => array(
-        'title' => t('User account'), 
-        'alt' => t('User account'), 
+        'title' => t('User account'),
+        'alt' => t('User account'),
         'class' => array('visible-xs', 'button-icon'),
       ),
     );
@@ -156,8 +156,8 @@ function navbar_view() {
       'title' => t('Hello <strong>@username</strong>', array('@username' => format_username($user))),
       'href' => '/user',
       'attributes' => array(
-        'title' => t('User account'), 
-        'alt' => t('User account'), 
+        'title' => t('User account'),
+        'alt' => t('User account'),
         'class' => array('hidden-xs', 'button-icon'),
       ),
     );
@@ -173,7 +173,7 @@ function navbar_view() {
         'title' => t('Content Dashboard'),
         'href' => '/admin/content',
         'attributes' => array(
-          'title' => t('Content Dashboard'), 
+          'title' => t('Content Dashboard'),
           'alt' => t('Content Dashboard'),
         ),
       );
@@ -181,7 +181,7 @@ function navbar_view() {
         'title' => t('Create Content'),
         'href' => '/node/add',
         'attributes' => array(
-          'title' => t('Add Content'), 
+          'title' => t('Add Content'),
           'alt' => t('Add Content'),
         ),
       );
@@ -190,7 +190,7 @@ function navbar_view() {
           'title' => t('Edit Taxonomy'),
           'href' => '/admin/structure/taxonomy',
           'attributes' => array(
-            'title' => t('Edit Taxonomy'), 
+            'title' => t('Edit Taxonomy'),
             'alt' => t('Edit Taxonomy'),
           ),
         );
@@ -255,7 +255,7 @@ function navbar_view() {
               'title' => t('View Published'),
               'href' => $path,
               'attributes' => array(
-                'title' => t('View Published'), 
+                'title' => t('View Published'),
                 'alt' => t('View Published'),
               ),
             );
@@ -270,7 +270,7 @@ function navbar_view() {
               'title' => t('View Draft'),
               'href' => $path,
               'attributes' => array(
-                'title' => t('View Draft'), 
+                'title' => t('View Draft'),
                 'alt' => t('View Draft'),
               ),
             );
@@ -308,7 +308,7 @@ function navbar_view() {
         'icon' => 'edit',
         'container classes' => 'dropdown',
         'attributes' => array(
-          'title' => t('Manage Content'), 
+          'title' => t('Manage Content'),
           'alt' => t('Manage Content'),
           'class' => array('button-icon'),
         ),
@@ -324,8 +324,8 @@ function navbar_view() {
         'icon' => 'cog',
         'container classes' => 'dropdown',
         'attributes' => array(
-          'title' => t('Administer Drupal'), 
-          'alt' => t('Administer Drupal'), 
+          'title' => t('Administer Drupal'),
+          'alt' => t('Administer Drupal'),
           'class' => array('button-icon'),
         ),
       );
@@ -334,8 +334,8 @@ function navbar_view() {
       'href' => '/user/logout',
       'icon' => 'sign-out',
       'attributes' => array(
-        'title' => t('Sign out'), 
-        'alt' => t('Sign out'), 
+        'title' => t('Sign out'),
+        'alt' => t('Sign out'),
         'class' => array('signout-button', 'button-icon'),
       ),
     );
@@ -345,8 +345,8 @@ function navbar_view() {
       'href' => 'user',
       'icon' => 'sign-in',
       'attributes' => array(
-        'title' => t('Sign in'), 
-        'alt' => t('Sign in'), 
+        'title' => t('Sign in'),
+        'alt' => t('Sign in'),
         'class' => array('signin-button'),
       ),
     );
@@ -355,7 +355,7 @@ function navbar_view() {
     '#theme' => 'navbar_button_group',
     '#items' => $items,
     '#attributes' => array(
-      'id' => 'navbar-user', 
+      'id' => 'navbar-user',
       'class' => array('nav', 'navbar-nav', 'navbar-right'),
     ),
   );
