@@ -195,16 +195,6 @@ function navbar_view() {
           ),
         );
       }
-      if (user_access('manage client releases')) {
-        $content_menu['manage client releases'] = array(
-          'title' => t('Manage Client Releases'),
-          'href' => '/admin/client-releases',
-          'attributes' => array(
-            'title' => t('Manage Client Releases'),
-            'alt' => t('Manage Client Releases'),
-          ),
-        );
-      }
     }
     // Build the local tasks for content management.
     $node = menu_get_object();
