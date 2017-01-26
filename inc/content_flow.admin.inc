@@ -392,7 +392,9 @@ function content_flow_admin_nodes($variables) {
         'query' => $destination,
       );
       if ($multilanguage && !empty($languages[$langcode]->prefix)) {
-        $operations['edit']['href'] = $languages[$langcode]->prefix . '/node/' . $node->nid . '/edit';
+        // @HACK: Remove the language code.
+        // $operations['edit']['href'] = $languages[$langcode]->prefix . '/node/' . $node->nid . '/edit';
+        $operations['edit']['href'] = '/node/' . $node->nid . '/edit';
       }
     }
     if (user_access('manage content workflow') && $managed_content_type) {
