@@ -287,7 +287,9 @@ function navbar_view() {
         );
         $langcode = entity_language('node', $node);
         if ($multilanguage && !empty($languages[$langcode]->prefix)) {
-          $content_menu[strtolower($local_task['#link']['title'])]['href'] = '/' . $languages[$langcode]->prefix . '/' . $local_task['#link']['href'];
+          // @HACK: Remove language code from link.
+          // $content_menu[strtolower($local_task['#link']['title'])]['href'] = '/' . $languages[$langcode]->prefix . '/' . $local_task['#link']['href'];
+          $content_menu[strtolower($local_task['#link']['title'])]['href'] = '/' . $local_task['#link']['href'];
         }
       }
     }
